@@ -131,9 +131,15 @@ const GamePage = () => {
               onToggleMute={handleToggleMute}
             />
             <GameCanvas
+              ref={gameCanvasRef}
               isPlaying={gameState === 'playing'}
               onGameOver={handleGameOver}
               onScoreUpdate={handleScoreUpdate}
+            />
+            {/* Mobile Controls - Only visible on touch devices */}
+            <MobileControls
+              onJump={handleMobileJump}
+              onThrow={handleMobileThrow}
             />
           </>
         )}
