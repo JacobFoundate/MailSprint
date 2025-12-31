@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import StartScreen from '@/components/game/StartScreen';
 import GameCanvas from '@/components/game/GameCanvas';
 import GameOverScreen from '@/components/game/GameOverScreen';
 import GameHUD from '@/components/game/GameHUD';
+import soundManager from '@/utils/SoundManager';
 
 const GamePage = () => {
   const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'paused', 'gameover'
@@ -16,6 +17,22 @@ const GamePage = () => {
   const [lives, setLives] = useState(3);
   const [damageFlash, setDamageFlash] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+
+  // Initialize sound on first interaction
+  useEffect(() => {
+    const initSound = () => {
+      soundManager.init();
+      window.removeEventListener('click', initSound);
+      window.removeEventListener('keydown', initSound);
+    };
+    window.addEventListener('click', initSound);
+    window.addEventListener('keydown', initSound);
+    return () => {
+      window.removeEventListener('click', initSound);
+      window.removeEventListener('keydown', initSound);
+    };
+  }, []);
 
   const handleStartGame = useCallback(() => {
     setScore(0);
@@ -23,12 +40,15 @@ const GamePage = () => {
     setDistance(0);
     setLives(3);
     setGameState('playing');
+    soundManager.init();
+    soundManager.startMusic();
   }, []);
 
   const handleGameOver = useCallback((finalScore, finalDeliveries, finalDistance) => {
     setScore(finalScore);
     setDeliveries(finalDeliveries);
     setDistance(finalDistance);
+    soundManager.stopMusic();
     
     if (finalScore > highScore) {
       setHighScore(finalScore);
@@ -39,7 +59,20 @@ const GamePage = () => {
   }, [highScore]);
 
   const handlePause = useCallback(() => {
-    setGameState(prev => prev === 'playing' ? 'paused' : 'playing');
+    setGameState(prev => {
+      if (prev === 'playing') {
+        soundManager.stopMusic();
+        return 'paused';
+      } else {
+        soundManager.startMusic();
+        return 'playing';
+      }
+    });
+  }, []);
+
+  const handleToggleMute = useCallback(() => {
+    const muted = soundManager.toggleMute();
+    setIsMuted(muted);
   }, []);
 
   const handleScoreUpdate = useCallback((newScore, newDeliveries, newDistance, newLives) => {
