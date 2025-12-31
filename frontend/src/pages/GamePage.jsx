@@ -95,6 +95,19 @@ const GamePage = () => {
     }
   }, []);
 
+  // Mobile control handlers
+  const handleMobileJump = useCallback(() => {
+    if (gameCanvasRef.current && gameState === 'playing') {
+      gameCanvasRef.current.jump();
+    }
+  }, [gameState]);
+
+  const handleMobileThrow = useCallback(() => {
+    if (gameCanvasRef.current && gameState === 'playing') {
+      gameCanvasRef.current.throwMail();
+    }
+  }, [gameState]);
+
   return (
     <div className={`game-container relative w-full h-screen overflow-hidden bg-background ${screenShake ? 'animate-shake' : ''}`}>
       {/* Damage Flash Overlay */}
