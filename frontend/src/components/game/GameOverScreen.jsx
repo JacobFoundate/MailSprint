@@ -41,10 +41,10 @@ const GameOverScreen = ({
   }, [onRestart]);
 
   const handleShare = () => {
-    const text = `I scored ${score.toLocaleString()} points in MailRun! Delivered ${deliveries} letters and ran ${distance}m. Can you beat my score?`;
+    const text = `I scored ${score.toLocaleString()} points in MailSprint! Delivered ${deliveries} letters and ran ${distance}m. Can you beat my score?`;
     if (navigator.share) {
       navigator.share({
-        title: 'MailRun Score',
+        title: 'MailSprint Score',
         text: text,
       });
     } else {
