@@ -379,14 +379,14 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         mail.vy += 0.5; // gravity
         mail.rotation += 15;
 
-        // Check mailbox collision
+        // Check mailbox collision - generous hitbox
         for (let box of state.mailboxes) {
           if (
             !box.hasDelivery &&
-            mail.x + 15 > box.x &&
-            mail.x < box.x + box.width &&
-            mail.y + 15 > box.y &&
-            mail.y < box.y + box.height
+            mail.x + 20 > box.x - 10 &&
+            mail.x < box.x + box.width + 10 &&
+            mail.y + 20 > box.y - 10 &&
+            mail.y < box.y + box.height + 20
           ) {
             box.hasDelivery = true;
             box.animating = true;
