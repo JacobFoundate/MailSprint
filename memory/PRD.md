@@ -15,14 +15,20 @@ MailSprint is an infinite runner game where players control a mailman running do
 - **Distance Points**: 1 point per unit of distance traveled
 - **Delivery Bonus**: 100 points for successfully landing mail in a mailbox
 - **High Score**: Persisted to localStorage for returning players
+- **Lives**: 5 total health (cars deal 2 damage)
 
 ### Game Objects
 - **Mailboxes**: Blue boxes with red flags - turn green when mail is delivered
+- **Heart Pickups**: Floating hearts that spawn every ~2 minutes, restore 1 HP
 - **Obstacles**:
   - Dogs (brown, animated legs) - plays bark sound
   - Traffic pylons (orange with white stripes)
   - Fire hydrants (red)
   - Trash cans (gray)
+  - Baby carriages (pink, plays cry sound when hit)
+  - Basketballs (orange, bouncing animation)
+  - Children (colorful clothes, animated walking)
+- **Cars**: Drive across screen every 1-3 minutes, deal 2 damage! (with horn sound)
 
 ### Day/Night Cycle
 - Full cycle every 2 minutes
@@ -31,6 +37,7 @@ MailSprint is an infinite runner game where players control a mailman running do
 - House windows glow at night
 
 ### Seasons (Changes every 15 day/night cycles)
+- **Random Start**: Game starts in a random season
 - **Spring**: Green grass, light blue sky, rain storms
 - **Summer**: Lush green grass, bright sky, sandstorms
 - **Fall**: Brown/orange grass, warm sky colors, maple leaves blowing
@@ -51,6 +58,9 @@ MailSprint is an infinite runner game where players control a mailman running do
   - Mailbox delivery (chime)
   - Obstacle hit (thud)
   - Dog collision (bark)
+  - Baby carriage hit (cry)
+  - Car horn (when car appears)
+  - Heart pickup (heal chime)
   - Jump (sweep)
 - **Mute Toggle**: Button in HUD
 
