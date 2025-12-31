@@ -1190,6 +1190,9 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       grassGrad.addColorStop(1, lerpColor(hexToRgb(seasonConfig.grassColor[1]), 'rgb(30,50,30)', nightAmount * 0.5));
       ctx.fillStyle = grassGrad; ctx.fillRect(0, groundY - 30, canvasSize.width, 30);
 
+      // Pedestrians walking on sidewalk (background)
+      state.pedestrians.forEach(ped => drawPedestrian(ctx, ped));
+
       // Road
       ctx.fillStyle = nightAmount > 0.5 ? '#404040' : '#616161'; ctx.fillRect(0, groundY, canvasSize.width, GAME_CONFIG.GROUND_HEIGHT);
       ctx.fillStyle = '#FFD54F'; const mo = (state.distance * 5) % 80;
