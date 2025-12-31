@@ -1,12 +1,14 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { Mail, MapPin, Pause, Play, Heart, AlertTriangle } from 'lucide-react';
+import { Mail, MapPin, Pause, Play, Heart, AlertTriangle, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, damageFlash = false }) => {
   const prevScoreRef = useRef(score);
   const prevLivesRef = useRef(lives);
+  const prevDeliveriesRef = useRef(deliveries);
   const [scoreAnimating, setScoreAnimating] = useState(false);
   const [livesAnimating, setLivesAnimating] = useState(false);
+  const [deliveryAnimating, setDeliveryAnimating] = useState(false);
 
   // Use useMemo to detect score changes without causing render loops
   useMemo(() => {
@@ -28,6 +30,16 @@ const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, da
     }
     prevLivesRef.current = lives;
   }, [lives]);
+
+  // Detect delivery changes for animation
+  useMemo(() => {
+    if (deliveries > prevDeliveriesRef.current) {
+      setDeliveryAnimating(true);
+      const timer = setTimeout(() => setDeliveryAnimating(false), 600);
+      prevDeliveriesRef.current = deliveries;
+      return () => clearTimeout(timer);
+    }
+  }, [deliveries]);
 
   return (
     <div className="absolute top-0 left-0 right-0 z-30 p-4">
@@ -51,10 +63,17 @@ const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, da
 
           {/* Stats Row */}
           <div className="flex gap-2">
-            {/* Deliveries */}
-            <div className="bg-card/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-playful border border-border flex items-center gap-2">
-              <Mail className="w-5 h-5 text-primary" />
-              <span className="font-fredoka text-lg text-foreground">{deliveries}</span>
+            {/* Deliveries - with success animation */}
+            <div className={`backdrop-blur-sm rounded-xl px-4 py-2 shadow-playful border-2 flex items-center gap-2 transition-all duration-200 ${deliveryAnimating ? 'bg-success/20 border-success scale-110' : 'bg-card/90 border-border'}`}>
+              {deliveryAnimating ? (
+                <Check className="w-5 h-5 text-success animate-bounce" />
+              ) : (
+                <Mail className="w-5 h-5 text-primary" />
+              )}
+              <span className={`font-fredoka text-lg transition-colors ${deliveryAnimating ? 'text-success' : 'text-foreground'}`}>{deliveries}</span>
+              {deliveryAnimating && (
+                <span className="text-xs text-success font-nunito font-bold animate-bounce">+100!</span>
+              )}
             </div>
 
             {/* Distance */}
