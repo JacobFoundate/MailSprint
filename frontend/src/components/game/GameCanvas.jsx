@@ -511,7 +511,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.beginPath(); ctx.arc(obs.x + 15, obs.y + 10, 10, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#5D4037';
         ctx.beginPath(); ctx.arc(obs.x + 15, obs.y + 6, 10, Math.PI, 0); ctx.fill();
-        ctx.fillStyle = ['#2196F3', '#4CAF50', '#FF9800', '#9C27B0'][Math.floor(obs.x) % 4];
+        ctx.fillStyle = obs.shirtColor || '#2196F3'; // Use fixed shirt color
         ctx.fillRect(obs.x + 5, obs.y + 18, 20, 15);
         ctx.fillStyle = '#1565C0';
         ctx.fillRect(obs.x + 5, obs.y + 31, 20, 8);
