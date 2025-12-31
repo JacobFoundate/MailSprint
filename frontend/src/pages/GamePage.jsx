@@ -13,11 +13,15 @@ const GamePage = () => {
   });
   const [deliveries, setDeliveries] = useState(0);
   const [distance, setDistance] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [damageFlash, setDamageFlash] = useState(false);
+  const [screenShake, setScreenShake] = useState(false);
 
   const handleStartGame = useCallback(() => {
     setScore(0);
     setDeliveries(0);
     setDistance(0);
+    setLives(3);
     setGameState('playing');
   }, []);
 
@@ -38,14 +42,31 @@ const GamePage = () => {
     setGameState(prev => prev === 'playing' ? 'paused' : 'playing');
   }, []);
 
-  const handleScoreUpdate = useCallback((newScore, newDeliveries, newDistance) => {
+  const handleScoreUpdate = useCallback((newScore, newDeliveries, newDistance, newLives) => {
     setScore(newScore);
     setDeliveries(newDeliveries);
     setDistance(newDistance);
+    if (newLives !== undefined) {
+      setLives(prev => {
+        // Trigger damage effect when lives decrease
+        if (newLives < prev) {
+          setDamageFlash(true);
+          setScreenShake(true);
+          setTimeout(() => setDamageFlash(false), 300);
+          setTimeout(() => setScreenShake(false), 500);
+        }
+        return newLives;
+      });
+    }
   }, []);
 
   return (
-    <div className="game-container relative w-full h-screen overflow-hidden bg-background">
+    <div className={`game-container relative w-full h-screen overflow-hidden bg-background ${screenShake ? 'animate-shake' : ''}`}>
+      {/* Damage Flash Overlay */}
+      {damageFlash && (
+        <div className="absolute inset-0 bg-destructive/30 z-50 pointer-events-none animate-pulse" />
+      )}
+      
       {/* Game Canvas - Always rendered but visibility controlled */}
       <div className={`absolute inset-0 ${gameState === 'start' ? 'pointer-events-none' : ''}`}>
         {gameState !== 'start' && (
@@ -54,8 +75,10 @@ const GamePage = () => {
               score={score}
               deliveries={deliveries}
               distance={distance}
+              lives={lives}
               isPaused={gameState === 'paused'}
               onPause={handlePause}
+              damageFlash={damageFlash}
             />
             <GameCanvas
               isPlaying={gameState === 'playing'}
