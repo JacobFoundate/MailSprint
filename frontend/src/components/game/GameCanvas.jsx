@@ -190,6 +190,56 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     state.leprechauns.push({ x: canvasSize.width + 50, y: groundY - 50, width: 40, height: 50, frame: 0, hits: 0, maxHits: 3 });
   }, [canvasSize]);
 
+  const spawnPedestrian = useCallback(() => {
+    const state = gameStateRef.current;
+    const groundY = canvasSize.height - GAME_CONFIG.GROUND_HEIGHT;
+    const goingRight = Math.random() > 0.5;
+    const pedestrianTypes = ['man', 'woman', 'jogger', 'elderly'];
+    const type = pedestrianTypes[Math.floor(Math.random() * pedestrianTypes.length)];
+    state.pedestrians.push({
+      type,
+      x: goingRight ? -50 : canvasSize.width + 50,
+      y: groundY - 55,
+      speed: (Math.random() * 1.5 + 1.5) * (goingRight ? 1 : -1),
+      frame: 0,
+      shirtColor: ['#E53935', '#1E88E5', '#43A047', '#FDD835', '#8E24AA', '#FF6F00'][Math.floor(Math.random() * 6)],
+      pantsColor: ['#1565C0', '#5D4037', '#37474F', '#6D4C41'][Math.floor(Math.random() * 4)],
+      skinTone: ['#FFCC80', '#E0AC69', '#C68642', '#8D5524'][Math.floor(Math.random() * 4)],
+    });
+  }, [canvasSize]);
+
+  const spawnBird = useCallback(() => {
+    const state = gameStateRef.current;
+    const goingRight = Math.random() > 0.5;
+    const birdTypes = ['small', 'large', 'flock'];
+    const type = birdTypes[Math.floor(Math.random() * birdTypes.length)];
+    const y = Math.random() * 150 + 50;
+    
+    if (type === 'flock') {
+      // Spawn a small flock of 3-5 birds
+      const count = Math.floor(Math.random() * 3) + 3;
+      for (let i = 0; i < count; i++) {
+        state.birds.push({
+          type: 'small',
+          x: (goingRight ? -30 : canvasSize.width + 30) - i * 25,
+          y: y + Math.sin(i) * 20,
+          speed: (Math.random() * 2 + 3) * (goingRight ? 1 : -1),
+          wingPhase: Math.random() * Math.PI * 2,
+          color: '#37474F',
+        });
+      }
+    } else {
+      state.birds.push({
+        type,
+        x: goingRight ? -30 : canvasSize.width + 30,
+        y,
+        speed: (Math.random() * 2 + (type === 'large' ? 2 : 3)) * (goingRight ? 1 : -1),
+        wingPhase: Math.random() * Math.PI * 2,
+        color: type === 'large' ? '#5D4037' : '#37474F',
+      });
+    }
+  }, [canvasSize]);
+
   const spawnRainbowPlatforms = useCallback(() => {
     const state = gameStateRef.current;
     state.rainbowPlatforms = [];
