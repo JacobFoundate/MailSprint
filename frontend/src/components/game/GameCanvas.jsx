@@ -961,6 +961,25 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       // Update houses
       state.houses.forEach(h => { h.x -= effectiveSpeed * 0.3; if (h.x + h.width < 0) { h.x = canvasSize.width + Math.random() * 200; } });
 
+      // Update trees
+      state.trees.forEach(t => { t.x -= effectiveSpeed * 0.3; if (t.x < -50) { t.x = canvasSize.width + Math.random() * 200 + 50; } });
+
+      // Update pedestrians (background, no collision)
+      state.pedestrians = state.pedestrians.filter(ped => {
+        ped.x += ped.speed;
+        ped.frame += 0.15 * Math.abs(ped.speed);
+        // Remove when off screen
+        return ped.speed > 0 ? ped.x < canvasSize.width + 100 : ped.x > -100;
+      });
+
+      // Update birds
+      state.birds = state.birds.filter(bird => {
+        bird.x += bird.speed;
+        bird.wingPhase += 0.3;
+        // Remove when off screen
+        return bird.speed > 0 ? bird.x < canvasSize.width + 100 : bird.x > -100;
+      });
+
       // Update hearts
       state.hearts = state.hearts.filter(heart => {
         heart.x -= effectiveSpeed; heart.pulse += 0.1;
