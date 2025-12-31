@@ -409,8 +409,8 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         return p.life > 0;
       });
 
-      // Update score callback
-      onScoreUpdate(state.score, state.deliveries, Math.floor(state.distance));
+      // Update score callback - include lives for damage tracking
+      onScoreUpdate(state.score, state.deliveries, Math.floor(state.distance), state.lives);
 
       // --- RENDERING ---
       ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
