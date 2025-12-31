@@ -360,7 +360,15 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
             state.invincibleTimer = 120; // 2 seconds at 60fps
             addParticles(state.player.x + GAME_CONFIG.PLAYER_WIDTH / 2, state.player.y + GAME_CONFIG.PLAYER_HEIGHT / 2, '#FF6B6B', 15);
             
+            // Play appropriate collision sound
+            if (obs.type === 'dog') {
+              soundManager.playBark();
+            } else {
+              soundManager.playThud();
+            }
+            
             if (state.lives <= 0) {
+              soundManager.stopMusic();
               onGameOver(state.score, state.deliveries, Math.floor(state.distance));
             }
           }
@@ -396,6 +404,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
             state.deliveries++;
             state.score += GAME_CONFIG.DELIVERY_POINTS;
             addParticles(box.x + box.width / 2, box.y, '#4ECDC4', 20);
+            soundManager.playDelivery();
             return false;
           }
         }
