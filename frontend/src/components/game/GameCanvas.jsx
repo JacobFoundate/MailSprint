@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useState } from 'react';
+import React, { useRef, useEffect, useCallback, useState, useImperativeHandle } from 'react';
 import soundManager from '@/utils/SoundManager';
 
 const GAME_CONFIG = {
