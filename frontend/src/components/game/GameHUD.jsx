@@ -2,7 +2,7 @@ import React, { useRef, useState, useMemo } from 'react';
 import { Mail, MapPin, Pause, Play, Heart, AlertTriangle, Check, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, damageFlash = false, isMuted = false, onToggleMute }) => {
+const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 5, damageFlash = false, isMuted = false, onToggleMute }) => {
   const prevScoreRef = useRef(score);
   const prevLivesRef = useRef(lives);
   const prevDeliveriesRef = useRef(deliveries);
@@ -87,14 +87,14 @@ const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, da
         {/* Right Side - Lives, Sound, and Pause */}
         <div className="flex items-center gap-3">
           {/* Lives - with damage animation */}
-          <div className={`bg-card/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-playful border-2 flex items-center gap-1 transition-all duration-200 ${livesAnimating ? 'border-destructive bg-destructive/20 scale-110 animate-wiggle' : 'border-border'}`}>
+          <div className={`bg-card/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-playful border-2 flex items-center gap-0.5 transition-all duration-200 ${livesAnimating ? 'border-destructive bg-destructive/20 scale-110 animate-wiggle' : 'border-border'}`}>
             {livesAnimating && (
-              <AlertTriangle className="w-5 h-5 text-destructive animate-pulse mr-1" />
+              <AlertTriangle className="w-4 h-4 text-destructive animate-pulse mr-1" />
             )}
-            {[...Array(3)].map((_, i) => (
+            {[...Array(5)].map((_, i) => (
               <Heart
                 key={i}
-                className={`w-6 h-6 transition-all duration-300 ${
+                className={`w-5 h-5 transition-all duration-300 ${
                   i < lives 
                     ? 'text-destructive fill-destructive' 
                     : 'text-muted-foreground/30 scale-75'
