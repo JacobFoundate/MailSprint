@@ -112,6 +112,8 @@ const GamePage = () => {
               isPaused={gameState === 'paused'}
               onPause={handlePause}
               damageFlash={damageFlash}
+              isMuted={isMuted}
+              onToggleMute={handleToggleMute}
             />
             <GameCanvas
               isPlaying={gameState === 'playing'}
