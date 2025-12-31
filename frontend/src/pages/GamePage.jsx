@@ -1,11 +1,13 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import StartScreen from '@/components/game/StartScreen';
 import GameCanvas from '@/components/game/GameCanvas';
 import GameOverScreen from '@/components/game/GameOverScreen';
 import GameHUD from '@/components/game/GameHUD';
+import MobileControls from '@/components/game/MobileControls';
 import soundManager from '@/utils/SoundManager';
 
 const GamePage = () => {
+  const gameCanvasRef = useRef(null);
   const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'paused', 'gameover'
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(() => {
