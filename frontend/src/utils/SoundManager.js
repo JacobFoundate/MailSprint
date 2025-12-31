@@ -374,6 +374,146 @@ class SoundManager {
   }
 
   /**
+   * Coin collect sound - classic arcade coin
+   */
+  playCoin() {
+    if (!this.initialized || this.isMuted) return;
+    this.resume();
+    
+    const now = this.audioContext.currentTime;
+    
+    // Quick ascending notes like Mario coin
+    const osc1 = this.audioContext.createOscillator();
+    osc1.type = 'square';
+    osc1.frequency.setValueAtTime(988, now); // B5
+    
+    const osc2 = this.audioContext.createOscillator();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(1319, now + 0.1); // E6
+    
+    const gain1 = this.audioContext.createGain();
+    gain1.gain.setValueAtTime(0.15, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+    
+    const gain2 = this.audioContext.createGain();
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.setValueAtTime(0.15, now + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+    
+    osc1.connect(gain1);
+    osc2.connect(gain2);
+    gain1.connect(this.sfxGain);
+    gain2.connect(this.sfxGain);
+    
+    osc1.start(now);
+    osc1.stop(now + 0.1);
+    osc2.start(now + 0.1);
+    osc2.stop(now + 0.3);
+  }
+
+  /**
+   * Leprechaun laugh - mischievous giggle
+   */
+  playLeprechaunLaugh() {
+    if (!this.initialized || this.isMuted) return;
+    this.resume();
+    
+    const now = this.audioContext.currentTime;
+    
+    // Create a series of "hehe" sounds
+    for (let i = 0; i < 4; i++) {
+      const startTime = now + (i * 0.12);
+      
+      const osc = this.audioContext.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400 + (i % 2) * 100, startTime);
+      osc.frequency.exponentialRampToValueAtTime(300, startTime + 0.08);
+      
+      const formant = this.audioContext.createBiquadFilter();
+      formant.type = 'bandpass';
+      formant.frequency.value = 1500;
+      formant.Q.value = 5;
+      
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+      
+      osc.connect(formant);
+      formant.connect(gain);
+      gain.connect(this.sfxGain);
+      
+      osc.start(startTime);
+      osc.stop(startTime + 0.1);
+    }
+  }
+
+  /**
+   * Trampoline boing sound
+   */
+  playBoing() {
+    if (!this.initialized || this.isMuted) return;
+    this.resume();
+    
+    const now = this.audioContext.currentTime;
+    
+    const osc = this.audioContext.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150, now);
+    osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+    osc.frequency.exponentialRampToValueAtTime(200, now + 0.3);
+    
+    const gain = this.audioContext.createGain();
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    
+    osc.start(now);
+    osc.stop(now + 0.4);
+  }
+
+  /**
+   * Superman whoosh - flying sound
+   */
+  playFlyWhoosh() {
+    if (!this.initialized || this.isMuted) return;
+    this.resume();
+    
+    const now = this.audioContext.currentTime;
+    
+    // Wind/whoosh noise
+    const bufferSize = this.audioContext.sampleRate * 0.3;
+    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+      const envelope = Math.sin((i / bufferSize) * Math.PI);
+      data[i] = (Math.random() * 2 - 1) * envelope * 0.5;
+    }
+    
+    const noise = this.audioContext.createBufferSource();
+    noise.buffer = buffer;
+    
+    const filter = this.audioContext.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.linearRampToValueAtTime(1500, now + 0.15);
+    filter.frequency.linearRampToValueAtTime(600, now + 0.3);
+    filter.Q.value = 2;
+    
+    const gain = this.audioContext.createGain();
+    gain.gain.value = 0.3;
+    
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.sfxGain);
+    
+    noise.start(now);
+  }
+
+  /**
    * Jump sound - quick upward sweep
    */
   playJump() {
