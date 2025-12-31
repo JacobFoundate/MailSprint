@@ -111,6 +111,7 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     gameStateRef.current = {
       player: { x: GAME_CONFIG.PLAYER_X, y: groundY, vy: 0, isJumping: false, isOnGround: true, isFlying: false },
       obstacles: [], mailboxes: [], mails: [], clouds: generateClouds(canvasSize.width), houses: generateHouses(canvasSize.width),
+      trees: generateTrees(canvasSize.width), pedestrians: [], birds: [],
       hearts: [], roadHazards: [], powerups: [], activePowerups: {}, coins: [], rainbowPlatforms: [], leprechauns: [],
       score: 0, deliveries: 0, distance: 0, speed: GAME_CONFIG.INITIAL_SPEED, nextSpawnDistance: GAME_CONFIG.MIN_SPAWN_DISTANCE,
       lives: GAME_CONFIG.MAX_LIVES, isInvincible: false, invincibleTimer: 0, lastMailThrow: 0, particles: [],
@@ -121,6 +122,8 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       nextRoadHazard: GAME_CONFIG.ROAD_HAZARD_MIN_INTERVAL + Math.random() * (GAME_CONFIG.ROAD_HAZARD_MAX_INTERVAL - GAME_CONFIG.ROAD_HAZARD_MIN_INTERVAL),
       nextPowerupSpawn: GAME_CONFIG.POWERUP_SPAWN_INTERVAL + Math.random() * 15,
       nextLeprechaunSpawn: GAME_CONFIG.LEPRECHAUN_SPAWN_INTERVAL + Math.random() * 30,
+      nextPedestrianSpawn: GAME_CONFIG.PEDESTRIAN_MIN_INTERVAL + Math.random() * (GAME_CONFIG.PEDESTRIAN_MAX_INTERVAL - GAME_CONFIG.PEDESTRIAN_MIN_INTERVAL),
+      nextBirdSpawn: GAME_CONFIG.BIRD_MIN_INTERVAL + Math.random() * (GAME_CONFIG.BIRD_MAX_INTERVAL - GAME_CONFIG.BIRD_MIN_INTERVAL),
       rapidFireTimer: 0, rainbowPlatformTimer: 0,
     };
     lastTimeRef.current = performance.now();
