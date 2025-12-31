@@ -610,6 +610,210 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     });
   };
 
+  const drawTree = (ctx, tree, groundY, nightAmount) => {
+    const baseY = groundY - 30;
+    const trunkHeight = tree.height * 0.4;
+    
+    // Trunk
+    ctx.fillStyle = nightAmount > 0.5 ? '#4E342E' : '#5D4037';
+    ctx.fillRect(tree.x - tree.trunkWidth / 2, baseY - trunkHeight, tree.trunkWidth, trunkHeight);
+    
+    // Foliage - adjust color for night
+    const foliageColor = nightAmount > 0.5 
+      ? '#1B5E20' 
+      : tree.foliageColor;
+    
+    ctx.fillStyle = foliageColor;
+    
+    switch (tree.foliageType) {
+      case 0: // Round tree
+        ctx.beginPath();
+        ctx.arc(tree.x, baseY - trunkHeight - tree.height * 0.35, tree.height * 0.4, 0, Math.PI * 2);
+        ctx.fill();
+        // Second layer
+        ctx.beginPath();
+        ctx.arc(tree.x - tree.height * 0.2, baseY - trunkHeight - tree.height * 0.2, tree.height * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(tree.x + tree.height * 0.2, baseY - trunkHeight - tree.height * 0.2, tree.height * 0.25, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      case 1: // Pine tree
+        ctx.beginPath();
+        ctx.moveTo(tree.x, baseY - tree.height);
+        ctx.lineTo(tree.x - tree.height * 0.35, baseY - trunkHeight);
+        ctx.lineTo(tree.x + tree.height * 0.35, baseY - trunkHeight);
+        ctx.closePath();
+        ctx.fill();
+        // Second layer
+        ctx.beginPath();
+        ctx.moveTo(tree.x, baseY - tree.height + tree.height * 0.15);
+        ctx.lineTo(tree.x - tree.height * 0.28, baseY - trunkHeight - tree.height * 0.2);
+        ctx.lineTo(tree.x + tree.height * 0.28, baseY - trunkHeight - tree.height * 0.2);
+        ctx.closePath();
+        ctx.fill();
+        break;
+      case 2: // Oak tree (fluffy)
+        const cx = tree.x;
+        const cy = baseY - trunkHeight - tree.height * 0.3;
+        for (let i = 0; i < 5; i++) {
+          const angle = (i / 5) * Math.PI * 2;
+          const r = tree.height * 0.25;
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(angle) * r * 0.5, cy + Math.sin(angle) * r * 0.3, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, tree.height * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const drawPedestrian = (ctx, ped) => {
+    ctx.save();
+    const dir = ped.speed > 0 ? 1 : -1;
+    if (dir < 0) {
+      ctx.translate(ped.x, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-ped.x, 0);
+    }
+    
+    const walkAnim = Math.sin(ped.frame) * 4;
+    
+    // Head
+    ctx.fillStyle = ped.skinTone;
+    ctx.beginPath();
+    ctx.arc(ped.x, ped.y + 8, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Hair
+    ctx.fillStyle = ped.type === 'elderly' ? '#9E9E9E' : '#5D4037';
+    if (ped.type === 'woman') {
+      ctx.beginPath();
+      ctx.arc(ped.x, ped.y + 5, 9, Math.PI, 0);
+      ctx.fill();
+      // Long hair
+      ctx.fillRect(ped.x - 9, ped.y + 5, 4, 15);
+      ctx.fillRect(ped.x + 5, ped.y + 5, 4, 15);
+    } else {
+      ctx.beginPath();
+      ctx.arc(ped.x, ped.y + 5, 8, Math.PI + 0.3, -0.3);
+      ctx.fill();
+    }
+    
+    // Body/shirt
+    ctx.fillStyle = ped.shirtColor;
+    ctx.fillRect(ped.x - 8, ped.y + 15, 16, 20);
+    
+    // Arms
+    ctx.fillStyle = ped.skinTone;
+    ctx.save();
+    ctx.translate(ped.x - 10, ped.y + 18);
+    ctx.rotate(Math.sin(ped.frame) * 0.3);
+    ctx.fillRect(-2, 0, 4, 12);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(ped.x + 10, ped.y + 18);
+    ctx.rotate(-Math.sin(ped.frame) * 0.3);
+    ctx.fillRect(-2, 0, 4, 12);
+    ctx.restore();
+    
+    // Pants
+    ctx.fillStyle = ped.pantsColor;
+    ctx.fillRect(ped.x - 8, ped.y + 33, 7, 15 + walkAnim);
+    ctx.fillRect(ped.x + 1, ped.y + 33, 7, 15 - walkAnim);
+    
+    // Jogger extras
+    if (ped.type === 'jogger') {
+      // Headband
+      ctx.fillStyle = '#E91E63';
+      ctx.fillRect(ped.x - 8, ped.y + 2, 16, 3);
+    }
+    
+    // Elderly extras
+    if (ped.type === 'elderly') {
+      // Walking cane
+      ctx.strokeStyle = '#6D4C41';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(ped.x + 12, ped.y + 20);
+      ctx.lineTo(ped.x + 18, ped.y + 55);
+      ctx.stroke();
+      // Cane handle
+      ctx.beginPath();
+      ctx.arc(ped.x + 12, ped.y + 18, 4, Math.PI, 0);
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  };
+
+  const drawBird = (ctx, bird) => {
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    
+    const dir = bird.speed > 0 ? 1 : -1;
+    if (dir < 0) {
+      ctx.scale(-1, 1);
+    }
+    
+    const wingY = Math.sin(bird.wingPhase) * 8;
+    const size = bird.type === 'large' ? 1.5 : 1;
+    
+    ctx.fillStyle = bird.color;
+    
+    // Body
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 8 * size, 5 * size, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Head
+    ctx.beginPath();
+    ctx.arc(10 * size, -2 * size, 4 * size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Beak
+    ctx.fillStyle = '#FF8F00';
+    ctx.beginPath();
+    ctx.moveTo(14 * size, -2 * size);
+    ctx.lineTo(18 * size, 0);
+    ctx.lineTo(14 * size, 1 * size);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Wings
+    ctx.fillStyle = bird.color;
+    ctx.beginPath();
+    ctx.moveTo(-2 * size, 0);
+    ctx.quadraticCurveTo(-8 * size, wingY - 5 * size, -12 * size, wingY);
+    ctx.quadraticCurveTo(-8 * size, wingY + 3 * size, -2 * size, 2 * size);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Tail
+    ctx.beginPath();
+    ctx.moveTo(-8 * size, 0);
+    ctx.lineTo(-15 * size, -3 * size);
+    ctx.lineTo(-15 * size, 3 * size);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Eye
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(11 * size, -3 * size, 2 * size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(11.5 * size, -3 * size, 1 * size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  };
+
   // Main game loop
   useEffect(() => {
     if (!canvasRef.current || canvasSize.width === 0) return;
