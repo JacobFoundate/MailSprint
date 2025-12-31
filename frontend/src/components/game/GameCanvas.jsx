@@ -30,6 +30,55 @@ const GAME_CONFIG = {
   DELIVERY_POINTS: 100,
   DISTANCE_POINTS: 1,
   BONUS_MULTIPLIER: 1.5,
+  
+  // Time & Weather
+  DAY_NIGHT_CYCLE_DURATION: 120, // 2 minutes in seconds
+  CYCLES_PER_SEASON: 15,
+  WEATHER_PARTICLE_COUNT: 100,
+};
+
+// Seasons enum
+const SEASONS = {
+  SPRING: 0,
+  SUMMER: 1,
+  FALL: 2,
+  WINTER: 3,
+};
+
+// Season colors and settings
+const SEASON_CONFIG = {
+  [SEASONS.SPRING]: {
+    name: 'Spring',
+    skyDay: ['#87CEEB', '#B0E0E6'],
+    skyNight: ['#1a1a2e', '#16213e'],
+    grassColor: ['#7CB342', '#558B2F'],
+    treeColor: '#90EE90',
+    weatherColor: 'rgba(120, 180, 255, 0.6)', // Rain - light blue
+  },
+  [SEASONS.SUMMER]: {
+    name: 'Summer',
+    skyDay: ['#4FB4E8', '#87CEEB'],
+    skyNight: ['#0f0f23', '#1a1a3e'],
+    grassColor: ['#8BC34A', '#689F38'],
+    treeColor: '#228B22',
+    weatherColor: 'rgba(210, 180, 140, 0.7)', // Sand - tan
+  },
+  [SEASONS.FALL]: {
+    name: 'Fall',
+    skyDay: ['#E8A87C', '#C38D6B'],
+    skyNight: ['#2d1b4e', '#1a1a2e'],
+    grassColor: ['#D4A574', '#8B7355'],
+    treeColor: '#D2691E',
+    weatherColor: 'rgba(205, 92, 0, 0.8)', // Maple leaves - orange
+  },
+  [SEASONS.WINTER]: {
+    name: 'Winter',
+    skyDay: ['#B0C4DE', '#87CEEB'],
+    skyNight: ['#0a1628', '#162447'],
+    grassColor: ['#E8E8E8', '#C0C0C0'],
+    treeColor: '#8B4513',
+    weatherColor: 'rgba(255, 255, 255, 0.9)', // Snow - white
+  },
 };
 
 // Generate initial clouds
@@ -61,6 +110,39 @@ const generateHouses = (width) => {
   return houses;
 };
 
+// Generate weather particles
+const generateWeatherParticles = (width, height, season) => {
+  const particles = [];
+  for (let i = 0; i < GAME_CONFIG.WEATHER_PARTICLE_COUNT; i++) {
+    particles.push(createWeatherParticle(width, height, season, true));
+  }
+  return particles;
+};
+
+const createWeatherParticle = (width, height, season, randomY = false) => {
+  const baseParticle = {
+    x: Math.random() * width * 1.5,
+    y: randomY ? Math.random() * height : -20,
+    size: Math.random() * 4 + 2,
+    speed: Math.random() * 2 + 1,
+    wobble: Math.random() * Math.PI * 2,
+    wobbleSpeed: Math.random() * 0.1 + 0.02,
+  };
+
+  switch (season) {
+    case SEASONS.SPRING: // Rain
+      return { ...baseParticle, size: 2, speed: Math.random() * 8 + 10, length: Math.random() * 15 + 10 };
+    case SEASONS.SUMMER: // Sand
+      return { ...baseParticle, size: Math.random() * 3 + 1, speed: Math.random() * 4 + 6, horizontal: Math.random() * 3 + 2 };
+    case SEASONS.FALL: // Maple leaves
+      return { ...baseParticle, size: Math.random() * 8 + 6, speed: Math.random() * 2 + 1, rotation: Math.random() * 360, rotationSpeed: Math.random() * 5 - 2.5 };
+    case SEASONS.WINTER: // Snow
+      return { ...baseParticle, size: Math.random() * 4 + 2, speed: Math.random() * 1.5 + 0.5 };
+    default:
+      return baseParticle;
+  }
+};
+
 const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
   const canvasRef = useRef(null);
   const gameStateRef = useRef({
@@ -86,9 +168,19 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     invincibleTimer: 0,
     lastMailThrow: 0,
     particles: [],
+    // Time & Weather
+    gameTime: 0,
+    dayNightProgress: 0, // 0 to 1 (0 = noon, 0.5 = midnight, 1 = noon again)
+    cycleCount: 0,
+    season: SEASONS.SPRING,
+    weatherParticles: [],
+    isStorming: false,
+    stormIntensity: 0,
+    nextStormChange: Math.random() * 30 + 15, // Random storm timing
   });
   
   const animationRef = useRef(null);
+  const lastTimeRef = useRef(0);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   // Initialize canvas size
@@ -131,7 +223,17 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       invincibleTimer: 0,
       lastMailThrow: 0,
       particles: [],
+      // Time & Weather
+      gameTime: 0,
+      dayNightProgress: 0,
+      cycleCount: 0,
+      season: SEASONS.SPRING,
+      weatherParticles: generateWeatherParticles(canvasSize.width, canvasSize.height, SEASONS.SPRING),
+      isStorming: false,
+      stormIntensity: 0,
+      nextStormChange: Math.random() * 30 + 15,
     };
+    lastTimeRef.current = performance.now();
   }, [canvasSize]);
 
   // Spawn obstacle or mailbox
@@ -144,9 +246,9 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       // Spawn mailbox - larger hitbox for easier deliveries
       state.mailboxes.push({
         x: spawnX,
-        y: groundY - 80,  // Higher up
-        width: 50,        // Wider hitbox
-        height: 80,       // Taller hitbox
+        y: groundY - 80,
+        width: 50,
+        height: 80,
         hasDelivery: false,
         animating: false,
       });
@@ -264,6 +366,83 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     };
   }, [isPlaying, jump, throwMail]);
 
+  // Interpolate between two colors
+  const lerpColor = (color1, color2, t) => {
+    const c1 = color1.match(/\d+/g).map(Number);
+    const c2 = color2.match(/\d+/g).map(Number);
+    const r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
+    const g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
+    const b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  // Convert hex to rgb string
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? `rgb(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)})` : hex;
+  };
+
+  // Draw weather particles
+  const drawWeatherParticles = (ctx, state, seasonConfig) => {
+    if (!state.isStorming || state.stormIntensity < 0.1) return;
+
+    const alpha = state.stormIntensity * 0.8;
+    
+    state.weatherParticles.forEach(p => {
+      ctx.save();
+      
+      switch (state.season) {
+        case SEASONS.SPRING: // Rain
+          ctx.strokeStyle = `rgba(120, 180, 255, ${alpha})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - 2, p.y + p.length);
+          ctx.stroke();
+          break;
+          
+        case SEASONS.SUMMER: // Sand particles
+          ctx.fillStyle = `rgba(210, 180, 140, ${alpha * 0.7})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+          
+        case SEASONS.FALL: // Maple leaves
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.fillStyle = `rgba(${180 + Math.random() * 40}, ${60 + Math.random() * 40}, 0, ${alpha})`;
+          // Draw simple leaf shape
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size / 2);
+          ctx.quadraticCurveTo(p.size / 2, -p.size / 4, p.size / 2, 0);
+          ctx.quadraticCurveTo(p.size / 2, p.size / 4, 0, p.size / 2);
+          ctx.quadraticCurveTo(-p.size / 2, p.size / 4, -p.size / 2, 0);
+          ctx.quadraticCurveTo(-p.size / 2, -p.size / 4, 0, -p.size / 2);
+          ctx.fill();
+          break;
+          
+        case SEASONS.WINTER: // Snow
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          // Add sparkle
+          if (Math.random() > 0.95) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 1.5})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          break;
+        default:
+          break;
+      }
+      
+      ctx.restore();
+    });
+  };
+
   // Main game loop
   useEffect(() => {
     if (!canvasRef.current || canvasSize.width === 0) return;
@@ -273,7 +452,10 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     
     initGame();
 
-    const gameLoop = () => {
+    const gameLoop = (currentTime) => {
+      const deltaTime = (currentTime - lastTimeRef.current) / 1000; // Convert to seconds
+      lastTimeRef.current = currentTime;
+
       if (!isPlaying) {
         animationRef.current = requestAnimationFrame(gameLoop);
         return;
@@ -282,6 +464,74 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       const state = gameStateRef.current;
       const groundY = canvasSize.height - GAME_CONFIG.GROUND_HEIGHT;
 
+      // ============ UPDATE TIME & WEATHER ============
+      state.gameTime += deltaTime;
+      
+      // Day/Night cycle (2 minutes = 120 seconds per cycle)
+      const cycleProgress = (state.gameTime % GAME_CONFIG.DAY_NIGHT_CYCLE_DURATION) / GAME_CONFIG.DAY_NIGHT_CYCLE_DURATION;
+      state.dayNightProgress = cycleProgress;
+      
+      // Check for new cycle
+      const newCycleCount = Math.floor(state.gameTime / GAME_CONFIG.DAY_NIGHT_CYCLE_DURATION);
+      if (newCycleCount > state.cycleCount) {
+        state.cycleCount = newCycleCount;
+        // Check for season change (every 15 cycles)
+        const newSeason = Math.floor(state.cycleCount / GAME_CONFIG.CYCLES_PER_SEASON) % 4;
+        if (newSeason !== state.season) {
+          state.season = newSeason;
+          state.weatherParticles = generateWeatherParticles(canvasSize.width, canvasSize.height, state.season);
+        }
+      }
+      
+      // Storm management
+      state.nextStormChange -= deltaTime;
+      if (state.nextStormChange <= 0) {
+        state.isStorming = !state.isStorming;
+        state.nextStormChange = Math.random() * 30 + (state.isStorming ? 10 : 20); // Storm lasts 10-40s, clear 20-50s
+      }
+      
+      // Update storm intensity (smooth transition)
+      const targetIntensity = state.isStorming ? 1 : 0;
+      state.stormIntensity += (targetIntensity - state.stormIntensity) * 0.02;
+      
+      // Update weather particles
+      state.weatherParticles.forEach(p => {
+        p.wobble += p.wobbleSpeed;
+        
+        switch (state.season) {
+          case SEASONS.SPRING: // Rain - falls straight down fast
+            p.y += p.speed * state.stormIntensity;
+            p.x -= 1; // Slight wind
+            break;
+          case SEASONS.SUMMER: // Sand - blows horizontally
+            p.y += p.speed * 0.3 * state.stormIntensity;
+            p.x -= p.horizontal * state.stormIntensity;
+            break;
+          case SEASONS.FALL: // Leaves - flutter down
+            p.y += p.speed * state.stormIntensity;
+            p.x -= (2 + Math.sin(p.wobble) * 2) * state.stormIntensity;
+            p.rotation += p.rotationSpeed * state.stormIntensity;
+            break;
+          case SEASONS.WINTER: // Snow - drifts down slowly
+            p.y += p.speed * state.stormIntensity;
+            p.x += Math.sin(p.wobble) * 0.5 * state.stormIntensity;
+            break;
+          default:
+            break;
+        }
+        
+        // Reset particle if off screen
+        if (p.y > canvasSize.height || p.x < -50) {
+          p.x = Math.random() * canvasSize.width * 1.5;
+          p.y = -20;
+          if (state.season === SEASONS.FALL) {
+            p.rotation = Math.random() * 360;
+          }
+        }
+      });
+
+      // ============ GAME LOGIC ============
+      
       // Update game speed
       state.speed = Math.min(GAME_CONFIG.MAX_SPEED, state.speed + GAME_CONFIG.SPEED_INCREMENT);
 
@@ -357,10 +607,9 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
           ) {
             state.lives--;
             state.isInvincible = true;
-            state.invincibleTimer = 120; // 2 seconds at 60fps
+            state.invincibleTimer = 120;
             addParticles(state.player.x + GAME_CONFIG.PLAYER_WIDTH / 2, state.player.y + GAME_CONFIG.PLAYER_HEIGHT / 2, '#FF6B6B', 15);
             
-            // Play appropriate collision sound
             if (obs.type === 'dog') {
               soundManager.playBark();
             } else {
@@ -387,10 +636,9 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       state.mails = state.mails.filter(mail => {
         mail.x += mail.vx;
         mail.y += mail.vy;
-        mail.vy += 0.5; // gravity
+        mail.vy += 0.5;
         mail.rotation += 15;
 
-        // Check mailbox collision - generous hitbox
         for (let box of state.mailboxes) {
           if (
             !box.hasDelivery &&
@@ -421,34 +669,83 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         return p.life > 0;
       });
 
-      // Update score callback - include lives for damage tracking
+      // Update score callback
       onScoreUpdate(state.score, state.deliveries, Math.floor(state.distance), state.lives);
 
-      // --- RENDERING ---
+      // ============ RENDERING ============
       ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // Draw sky gradient
+      const seasonConfig = SEASON_CONFIG[state.season];
+      
+      // Calculate day/night interpolation (0 = day, 1 = night)
+      // Use sine wave for smooth transition
+      const nightAmount = (Math.sin(state.dayNightProgress * Math.PI * 2 - Math.PI / 2) + 1) / 2;
+      
+      // Draw sky gradient with day/night cycle
       const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY);
-      skyGradient.addColorStop(0, '#87CEEB');
-      skyGradient.addColorStop(1, '#B0E0E6');
+      const skyTopDay = hexToRgb(seasonConfig.skyDay[0]);
+      const skyBottomDay = hexToRgb(seasonConfig.skyDay[1]);
+      const skyTopNight = hexToRgb(seasonConfig.skyNight[0]);
+      const skyBottomNight = hexToRgb(seasonConfig.skyNight[1]);
+      
+      skyGradient.addColorStop(0, lerpColor(skyTopDay, skyTopNight, nightAmount));
+      skyGradient.addColorStop(1, lerpColor(skyBottomDay, skyBottomNight, nightAmount));
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvasSize.width, groundY);
 
-      // Draw sun
-      ctx.fillStyle = '#FFD93D';
-      ctx.beginPath();
-      ctx.arc(canvasSize.width - 100, 80, 50, 0, Math.PI * 2);
-      ctx.fill();
+      // Draw sun/moon
+      const celestialX = canvasSize.width - 100;
+      const celestialY = 50 + Math.sin(state.dayNightProgress * Math.PI * 2) * 30;
+      
+      if (nightAmount < 0.5) {
+        // Sun
+        ctx.fillStyle = `rgba(255, 217, 61, ${1 - nightAmount * 2})`;
+        ctx.beginPath();
+        ctx.arc(celestialX, celestialY, 50, 0, Math.PI * 2);
+        ctx.fill();
+        // Sun glow
+        ctx.fillStyle = `rgba(255, 217, 61, ${(1 - nightAmount * 2) * 0.3})`;
+        ctx.beginPath();
+        ctx.arc(celestialX, celestialY, 70, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Moon
+        ctx.fillStyle = `rgba(230, 230, 250, ${(nightAmount - 0.5) * 2})`;
+        ctx.beginPath();
+        ctx.arc(celestialX, celestialY, 40, 0, Math.PI * 2);
+        ctx.fill();
+        // Moon craters
+        ctx.fillStyle = `rgba(200, 200, 220, ${(nightAmount - 0.5) * 2})`;
+        ctx.beginPath();
+        ctx.arc(celestialX - 10, celestialY - 5, 8, 0, Math.PI * 2);
+        ctx.arc(celestialX + 12, celestialY + 10, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-      // Draw clouds
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      // Draw stars at night
+      if (nightAmount > 0.3) {
+        const starAlpha = (nightAmount - 0.3) / 0.7;
+        ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha * 0.8})`;
+        for (let i = 0; i < 50; i++) {
+          const starX = (i * 137.5 + state.gameTime * 0.5) % canvasSize.width;
+          const starY = (i * 97.3) % (groundY - 100) + 20;
+          const starSize = (Math.sin(state.gameTime * 2 + i) + 1) * 1.5 + 0.5;
+          ctx.beginPath();
+          ctx.arc(starX, starY, starSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Draw clouds (darker at night)
+      const cloudAlpha = 1 - nightAmount * 0.5;
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * cloudAlpha})`;
       state.clouds.forEach(cloud => {
         ctx.beginPath();
         ctx.ellipse(cloud.x, cloud.y, cloud.width / 2, cloud.width / 4, 0, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      // Draw houses (background)
+      // Draw houses (background) with lights at night
       state.houses.forEach(house => {
         const houseBottom = groundY - 30;
         // House body
@@ -465,21 +762,26 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         // Door
         ctx.fillStyle = '#5D4037';
         ctx.fillRect(house.x + house.width / 2 - 10, houseBottom - 35, 20, 35);
-        // Window
-        ctx.fillStyle = '#81D4FA';
+        // Windows (glow at night)
+        const windowGlow = nightAmount > 0.4 ? (nightAmount - 0.4) / 0.6 : 0;
+        ctx.fillStyle = windowGlow > 0 ? `rgba(255, 220, 100, ${0.8 * windowGlow})` : '#81D4FA';
         ctx.fillRect(house.x + 15, houseBottom - house.height + 20, 20, 20);
         ctx.fillRect(house.x + house.width - 35, houseBottom - house.height + 20, 20, 20);
       });
 
-      // Draw grass
+      // Draw grass with seasonal colors
       const grassGradient = ctx.createLinearGradient(0, groundY - 30, 0, groundY);
-      grassGradient.addColorStop(0, '#7CB342');
-      grassGradient.addColorStop(1, '#558B2F');
+      const grassLight = hexToRgb(seasonConfig.grassColor[0]);
+      const grassDark = hexToRgb(seasonConfig.grassColor[1]);
+      // Darken grass at night
+      grassGradient.addColorStop(0, lerpColor(grassLight, 'rgb(40, 60, 40)', nightAmount * 0.5));
+      grassGradient.addColorStop(1, lerpColor(grassDark, 'rgb(30, 50, 30)', nightAmount * 0.5));
       ctx.fillStyle = grassGradient;
       ctx.fillRect(0, groundY - 30, canvasSize.width, 30);
 
       // Draw road
-      ctx.fillStyle = '#616161';
+      const roadColor = nightAmount > 0.5 ? '#404040' : '#616161';
+      ctx.fillStyle = roadColor;
       ctx.fillRect(0, groundY, canvasSize.width, GAME_CONFIG.GROUND_HEIGHT);
       // Road markings
       ctx.fillStyle = '#FFD54F';
@@ -489,7 +791,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       }
 
       // Draw sidewalk
-      ctx.fillStyle = '#BDBDBD';
+      ctx.fillStyle = nightAmount > 0.5 ? '#909090' : '#BDBDBD';
       ctx.fillRect(0, groundY - 5, canvasSize.width, 10);
 
       // Draw mailboxes
@@ -509,18 +811,14 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       state.obstacles.forEach(obs => {
         switch (obs.type) {
           case 'dog':
-            // Dog body
             ctx.fillStyle = '#8D6E63';
             ctx.fillRect(obs.x, obs.y + 10, 40, 25);
-            // Dog head
             ctx.beginPath();
             ctx.arc(obs.x + 45, obs.y + 15, 12, 0, Math.PI * 2);
             ctx.fill();
-            // Dog legs (animated)
             const legOffset = Math.floor(obs.frame) * 5;
             ctx.fillRect(obs.x + 5, obs.y + 30, 8, 10 + legOffset);
             ctx.fillRect(obs.x + 25, obs.y + 30, 8, 10 - legOffset);
-            // Eye
             ctx.fillStyle = '#000';
             ctx.beginPath();
             ctx.arc(obs.x + 48, obs.y + 13, 2, 0, Math.PI * 2);
@@ -534,7 +832,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
             ctx.lineTo(obs.x, obs.y + obs.height);
             ctx.closePath();
             ctx.fill();
-            // White stripes
             ctx.fillStyle = '#FFF';
             ctx.fillRect(obs.x + 5, obs.y + 20, obs.width - 10, 8);
             ctx.fillRect(obs.x + 3, obs.y + 35, obs.width - 6, 8);
@@ -543,7 +840,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
             ctx.fillStyle = '#C62828';
             ctx.fillRect(obs.x + 5, obs.y, 20, obs.height);
             ctx.fillRect(obs.x, obs.y + 10, obs.width, 15);
-            // Top
             ctx.beginPath();
             ctx.arc(obs.x + 15, obs.y, 10, 0, Math.PI * 2);
             ctx.fill();
@@ -551,7 +847,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
           case 'trash':
             ctx.fillStyle = '#37474F';
             ctx.fillRect(obs.x, obs.y + 10, obs.width, obs.height - 10);
-            // Lid
             ctx.fillRect(obs.x - 3, obs.y, obs.width + 6, 12);
             ctx.beginPath();
             ctx.arc(obs.x + obs.width / 2, obs.y, obs.width / 2 + 3, Math.PI, 0);
@@ -569,13 +864,11 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.save();
         ctx.translate(mail.x + 10, mail.y + 7);
         ctx.rotate((mail.rotation * Math.PI) / 180);
-        // Envelope
         ctx.fillStyle = '#FFF';
         ctx.fillRect(-10, -7, 20, 14);
         ctx.strokeStyle = '#1565C0';
         ctx.lineWidth = 2;
         ctx.strokeRect(-10, -7, 20, 14);
-        // Envelope flap
         ctx.beginPath();
         ctx.moveTo(-10, -7);
         ctx.lineTo(0, 2);
@@ -590,47 +883,39 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       const flash = state.isInvincible && Math.floor(state.invincibleTimer / 5) % 2 === 0;
       
       if (!flash) {
-        // Legs
         ctx.fillStyle = '#1A237E';
         const legAnim = Math.sin(state.distance * 0.3) * (state.player.isOnGround ? 5 : 0);
         ctx.fillRect(px + 10, py + 50, 12, 20 + legAnim);
         ctx.fillRect(px + 28, py + 50, 12, 20 - legAnim);
         
-        // Body
         ctx.fillStyle = '#1976D2';
         ctx.fillRect(px + 8, py + 25, 34, 30);
         
-        // Mail bag
         ctx.fillStyle = '#FFD54F';
         ctx.fillRect(px + 38, py + 30, 15, 20);
         ctx.fillStyle = '#FFF';
         ctx.fillRect(px + 41, py + 35, 9, 10);
         
-        // Head
         ctx.fillStyle = '#FFCC80';
         ctx.beginPath();
         ctx.arc(px + 25, py + 15, 15, 0, Math.PI * 2);
         ctx.fill();
         
-        // Hat
         ctx.fillStyle = '#1976D2';
         ctx.fillRect(px + 8, py + 5, 34, 8);
         ctx.fillRect(px + 12, py - 5, 26, 12);
         
-        // Face
         ctx.fillStyle = '#000';
         ctx.beginPath();
         ctx.arc(px + 20, py + 13, 2, 0, Math.PI * 2);
         ctx.arc(px + 30, py + 13, 2, 0, Math.PI * 2);
         ctx.fill();
-        // Smile
         ctx.strokeStyle = '#000';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(px + 25, py + 18, 5, 0.2, Math.PI - 0.2);
         ctx.stroke();
         
-        // Arm throwing animation
         const armAngle = state.lastMailThrow > Date.now() - 200 ? -0.5 : 0;
         ctx.save();
         ctx.translate(px + 40, py + 35);
@@ -640,7 +925,21 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.restore();
       }
 
-      // Draw particles
+      // Draw weather particles on top
+      drawWeatherParticles(ctx, state, seasonConfig);
+
+      // Draw storm overlay
+      if (state.stormIntensity > 0.1) {
+        const overlayAlpha = state.stormIntensity * 0.15;
+        ctx.fillStyle = state.season === SEASONS.WINTER 
+          ? `rgba(200, 220, 255, ${overlayAlpha})`
+          : state.season === SEASONS.SUMMER
+            ? `rgba(255, 220, 180, ${overlayAlpha})`
+            : `rgba(100, 100, 120, ${overlayAlpha})`;
+        ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+      }
+
+      // Draw effect particles
       state.particles.forEach(p => {
         ctx.globalAlpha = p.life;
         ctx.fillStyle = p.color;
@@ -649,6 +948,20 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.fill();
       });
       ctx.globalAlpha = 1;
+
+      // Draw season/time indicator
+      ctx.fillStyle = `rgba(0, 0, 0, 0.5)`;
+      ctx.fillRect(canvasSize.width - 140, canvasSize.height - 45, 130, 35);
+      ctx.fillStyle = '#FFF';
+      ctx.font = '14px Nunito, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${seasonConfig.name} ${nightAmount > 0.5 ? '🌙' : '☀️'}`, canvasSize.width - 75, canvasSize.height - 22);
+      if (state.isStorming) {
+        const weatherEmoji = state.season === SEASONS.WINTER ? '❄️' : 
+                            state.season === SEASONS.SUMMER ? '🏜️' :
+                            state.season === SEASONS.FALL ? '🍂' : '🌧️';
+        ctx.fillText(weatherEmoji, canvasSize.width - 75, canvasSize.height - 5);
+      }
 
       animationRef.current = requestAnimationFrame(gameLoop);
     };
