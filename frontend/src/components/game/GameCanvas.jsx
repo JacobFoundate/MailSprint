@@ -186,6 +186,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       state.player.vy = GAME_CONFIG.JUMP_FORCE;
       state.player.isJumping = true;
       state.player.isOnGround = false;
+      soundManager.playJump();
     }
   }, []);
 
@@ -205,6 +206,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     });
     
     state.lastMailThrow = now;
+    soundManager.playThrow();
   }, []);
 
   // Add particles for effects
