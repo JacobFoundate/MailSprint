@@ -140,12 +140,12 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     const spawnX = canvasSize.width + 100;
 
     if (Math.random() < GAME_CONFIG.MAILBOX_SPAWN_CHANCE) {
-      // Spawn mailbox
+      // Spawn mailbox - larger hitbox for easier deliveries
       state.mailboxes.push({
         x: spawnX,
-        y: groundY - 60,
-        width: 30,
-        height: 60,
+        y: groundY - 80,  // Higher up
+        width: 50,        // Wider hitbox
+        height: 80,       // Taller hitbox
         hasDelivery: false,
         animating: false,
       });
