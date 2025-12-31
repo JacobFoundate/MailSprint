@@ -1,8 +1,8 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { Mail, MapPin, Pause, Play, Heart, AlertTriangle, Check } from 'lucide-react';
+import { Mail, MapPin, Pause, Play, Heart, AlertTriangle, Check, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, damageFlash = false }) => {
+const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, damageFlash = false, isMuted = false, onToggleMute }) => {
   const prevScoreRef = useRef(score);
   const prevLivesRef = useRef(lives);
   const prevDeliveriesRef = useRef(deliveries);
@@ -84,7 +84,7 @@ const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, da
           </div>
         </div>
 
-        {/* Right Side - Lives and Pause */}
+        {/* Right Side - Lives, Sound, and Pause */}
         <div className="flex items-center gap-3">
           {/* Lives - with damage animation */}
           <div className={`bg-card/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-playful border-2 flex items-center gap-1 transition-all duration-200 ${livesAnimating ? 'border-destructive bg-destructive/20 scale-110 animate-wiggle' : 'border-border'}`}>
@@ -102,6 +102,20 @@ const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3, da
               />
             ))}
           </div>
+
+          {/* Sound Toggle Button */}
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={onToggleMute}
+            className="h-12 w-12 rounded-xl"
+          >
+            {isMuted ? (
+              <VolumeX className="w-5 h-5" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
+          </Button>
 
           {/* Pause Button */}
           <Button
