@@ -14,7 +14,7 @@ const GamePage = () => {
   });
   const [deliveries, setDeliveries] = useState(0);
   const [distance, setDistance] = useState(0);
-  const [lives, setLives] = useState(3);
+  const [lives, setLives] = useState(5);
   const [damageFlash, setDamageFlash] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -38,7 +38,7 @@ const GamePage = () => {
     setScore(0);
     setDeliveries(0);
     setDistance(0);
-    setLives(3);
+    setLives(5); // Start with 5 lives
     setGameState('playing');
     soundManager.init();
     soundManager.startMusic();
