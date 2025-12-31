@@ -1109,6 +1109,6 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
   }, [canvasSize, isPlaying, initGame, spawnGameObject, spawnHeart, spawnRoadHazard, spawnPowerup, activatePowerup, onGameOver, onScoreUpdate, addParticles, throwMail]);
 
   return <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} className="absolute inset-0 game-canvas" />;
-};
+});
 
 export default GameCanvas;
