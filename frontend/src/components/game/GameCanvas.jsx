@@ -157,7 +157,7 @@ const createWeatherParticle = (width, height, season, randomY = false) => {
   }
 };
 
-const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
+const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, ref) => {
   const canvasRef = useRef(null);
   const gameStateRef = useRef(null);
   const animationRef = useRef(null);
