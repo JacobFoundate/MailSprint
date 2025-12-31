@@ -900,6 +900,10 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       if (state.nextPowerupSpawn <= 0) { spawnPowerup(); state.nextPowerupSpawn = GAME_CONFIG.POWERUP_SPAWN_INTERVAL + Math.random() * 15; }
       state.nextLeprechaunSpawn -= deltaTime;
       if (state.nextLeprechaunSpawn <= 0) { spawnLeprechaun(); state.nextLeprechaunSpawn = GAME_CONFIG.LEPRECHAUN_SPAWN_INTERVAL + Math.random() * 30; }
+      state.nextPedestrianSpawn -= deltaTime;
+      if (state.nextPedestrianSpawn <= 0) { spawnPedestrian(); state.nextPedestrianSpawn = GAME_CONFIG.PEDESTRIAN_MIN_INTERVAL + Math.random() * (GAME_CONFIG.PEDESTRIAN_MAX_INTERVAL - GAME_CONFIG.PEDESTRIAN_MIN_INTERVAL); }
+      state.nextBirdSpawn -= deltaTime;
+      if (state.nextBirdSpawn <= 0) { spawnBird(); state.nextBirdSpawn = GAME_CONFIG.BIRD_MIN_INTERVAL + Math.random() * (GAME_CONFIG.BIRD_MAX_INTERVAL - GAME_CONFIG.BIRD_MIN_INTERVAL); }
 
       // Game mechanics
       state.speed = Math.min(GAME_CONFIG.MAX_SPEED, state.speed + GAME_CONFIG.SPEED_INCREMENT);
