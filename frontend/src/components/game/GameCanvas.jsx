@@ -9,6 +9,7 @@ const GAME_CONFIG = {
   JUMP_FORCE: -18,
   GRAVITY: 0.8,
   MAX_FALL_SPEED: 20,
+  MAX_LIVES: 5,
   
   // Ground
   GROUND_HEIGHT: 100,
@@ -21,10 +22,10 @@ const GAME_CONFIG = {
   // Spawning
   MIN_SPAWN_DISTANCE: 300,
   MAX_SPAWN_DISTANCE: 600,
-  MAILBOX_SPAWN_CHANCE: 0.4,
+  MAILBOX_SPAWN_CHANCE: 0.35,
   
-  // Obstacles
-  OBSTACLE_TYPES: ['dog', 'pylon', 'hydrant', 'trash'],
+  // Obstacles - expanded list
+  OBSTACLE_TYPES: ['dog', 'pylon', 'hydrant', 'trash', 'baby', 'basketball', 'child'],
   
   // Scoring
   DELIVERY_POINTS: 100,
@@ -32,9 +33,17 @@ const GAME_CONFIG = {
   BONUS_MULTIPLIER: 1.5,
   
   // Time & Weather
-  DAY_NIGHT_CYCLE_DURATION: 120, // 2 minutes in seconds
+  DAY_NIGHT_CYCLE_DURATION: 120, // 2 minutes
   CYCLES_PER_SEASON: 15,
   WEATHER_PARTICLE_COUNT: 100,
+  
+  // Heart pickups
+  HEART_SPAWN_INTERVAL: 120, // ~2 minutes
+  
+  // Cars
+  CAR_SPAWN_MIN_INTERVAL: 60, // 1 minute minimum
+  CAR_SPAWN_MAX_INTERVAL: 180, // 3 minutes maximum
+  CAR_SPEED: 15,
 };
 
 // Seasons enum
@@ -53,7 +62,7 @@ const SEASON_CONFIG = {
     skyNight: ['#1a1a2e', '#16213e'],
     grassColor: ['#7CB342', '#558B2F'],
     treeColor: '#90EE90',
-    weatherColor: 'rgba(120, 180, 255, 0.6)', // Rain - light blue
+    weatherColor: 'rgba(120, 180, 255, 0.6)',
   },
   [SEASONS.SUMMER]: {
     name: 'Summer',
@@ -61,7 +70,7 @@ const SEASON_CONFIG = {
     skyNight: ['#0f0f23', '#1a1a3e'],
     grassColor: ['#8BC34A', '#689F38'],
     treeColor: '#228B22',
-    weatherColor: 'rgba(210, 180, 140, 0.7)', // Sand - tan
+    weatherColor: 'rgba(210, 180, 140, 0.7)',
   },
   [SEASONS.FALL]: {
     name: 'Fall',
@@ -69,7 +78,7 @@ const SEASON_CONFIG = {
     skyNight: ['#2d1b4e', '#1a1a2e'],
     grassColor: ['#D4A574', '#8B7355'],
     treeColor: '#D2691E',
-    weatherColor: 'rgba(205, 92, 0, 0.8)', // Maple leaves - orange
+    weatherColor: 'rgba(205, 92, 0, 0.8)',
   },
   [SEASONS.WINTER]: {
     name: 'Winter',
@@ -77,9 +86,12 @@ const SEASON_CONFIG = {
     skyNight: ['#0a1628', '#162447'],
     grassColor: ['#E8E8E8', '#C0C0C0'],
     treeColor: '#8B4513',
-    weatherColor: 'rgba(255, 255, 255, 0.9)', // Snow - white
+    weatherColor: 'rgba(255, 255, 255, 0.9)',
   },
 };
+
+// Car colors
+const CAR_COLORS = ['#E53935', '#1E88E5', '#43A047', '#FDD835', '#8E24AA', '#FF6F00', '#00ACC1'];
 
 // Generate initial clouds
 const generateClouds = (width) => {
@@ -130,13 +142,13 @@ const createWeatherParticle = (width, height, season, randomY = false) => {
   };
 
   switch (season) {
-    case SEASONS.SPRING: // Rain
+    case SEASONS.SPRING:
       return { ...baseParticle, size: 2, speed: Math.random() * 8 + 10, length: Math.random() * 15 + 10 };
-    case SEASONS.SUMMER: // Sand
+    case SEASONS.SUMMER:
       return { ...baseParticle, size: Math.random() * 3 + 1, speed: Math.random() * 4 + 6, horizontal: Math.random() * 3 + 2 };
-    case SEASONS.FALL: // Maple leaves
+    case SEASONS.FALL:
       return { ...baseParticle, size: Math.random() * 8 + 6, speed: Math.random() * 2 + 1, rotation: Math.random() * 360, rotationSpeed: Math.random() * 5 - 2.5 };
-    case SEASONS.WINTER: // Snow
+    case SEASONS.WINTER:
       return { ...baseParticle, size: Math.random() * 4 + 2, speed: Math.random() * 1.5 + 0.5 };
     default:
       return baseParticle;
@@ -145,40 +157,7 @@ const createWeatherParticle = (width, height, season, randomY = false) => {
 
 const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
   const canvasRef = useRef(null);
-  const gameStateRef = useRef({
-    player: {
-      x: GAME_CONFIG.PLAYER_X,
-      y: 0,
-      vy: 0,
-      isJumping: false,
-      isOnGround: true,
-    },
-    obstacles: [],
-    mailboxes: [],
-    mails: [],
-    clouds: [],
-    houses: [],
-    score: 0,
-    deliveries: 0,
-    distance: 0,
-    speed: GAME_CONFIG.INITIAL_SPEED,
-    nextSpawnDistance: GAME_CONFIG.MIN_SPAWN_DISTANCE,
-    lives: 3,
-    isInvincible: false,
-    invincibleTimer: 0,
-    lastMailThrow: 0,
-    particles: [],
-    // Time & Weather
-    gameTime: 0,
-    dayNightProgress: 0, // 0 to 1 (0 = noon, 0.5 = midnight, 1 = noon again)
-    cycleCount: 0,
-    season: SEASONS.SPRING,
-    weatherParticles: [],
-    isStorming: false,
-    stormIntensity: 0,
-    nextStormChange: Math.random() * 30 + 15, // Random storm timing
-  });
-  
+  const gameStateRef = useRef(null);
   const animationRef = useRef(null);
   const lastTimeRef = useRef(0);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
@@ -199,6 +178,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
   // Initialize game objects
   const initGame = useCallback(() => {
     const groundY = canvasSize.height - GAME_CONFIG.GROUND_HEIGHT - GAME_CONFIG.PLAYER_HEIGHT;
+    const randomSeason = Math.floor(Math.random() * 4); // Random starting season
     
     gameStateRef.current = {
       player: {
@@ -213,12 +193,14 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       mails: [],
       clouds: generateClouds(canvasSize.width),
       houses: generateHouses(canvasSize.width),
+      hearts: [], // Heart pickups
+      cars: [], // Moving cars
       score: 0,
       deliveries: 0,
       distance: 0,
       speed: GAME_CONFIG.INITIAL_SPEED,
       nextSpawnDistance: GAME_CONFIG.MIN_SPAWN_DISTANCE,
-      lives: 3,
+      lives: GAME_CONFIG.MAX_LIVES,
       isInvincible: false,
       invincibleTimer: 0,
       lastMailThrow: 0,
@@ -227,11 +209,15 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       gameTime: 0,
       dayNightProgress: 0,
       cycleCount: 0,
-      season: SEASONS.SPRING,
-      weatherParticles: generateWeatherParticles(canvasSize.width, canvasSize.height, SEASONS.SPRING),
+      season: randomSeason,
+      weatherParticles: generateWeatherParticles(canvasSize.width, canvasSize.height, randomSeason),
       isStorming: false,
       stormIntensity: 0,
       nextStormChange: Math.random() * 30 + 15,
+      // Heart spawning
+      nextHeartSpawn: GAME_CONFIG.HEART_SPAWN_INTERVAL + Math.random() * 30,
+      // Car spawning
+      nextCarSpawn: GAME_CONFIG.CAR_SPAWN_MIN_INTERVAL + Math.random() * (GAME_CONFIG.CAR_SPAWN_MAX_INTERVAL - GAME_CONFIG.CAR_SPAWN_MIN_INTERVAL),
     };
     lastTimeRef.current = performance.now();
   }, [canvasSize]);
@@ -243,7 +229,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     const spawnX = canvasSize.width + 100;
 
     if (Math.random() < GAME_CONFIG.MAILBOX_SPAWN_CHANCE) {
-      // Spawn mailbox - larger hitbox for easier deliveries
       state.mailboxes.push({
         x: spawnX,
         y: groundY - 80,
@@ -253,7 +238,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         animating: false,
       });
     } else {
-      // Spawn obstacle
       const type = GAME_CONFIG.OBSTACLE_TYPES[Math.floor(Math.random() * GAME_CONFIG.OBSTACLE_TYPES.length)];
       let obstacle = { type, x: spawnX };
       
@@ -270,6 +254,15 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         case 'trash':
           obstacle = { ...obstacle, y: groundY - 55, width: 40, height: 55 };
           break;
+        case 'baby':
+          obstacle = { ...obstacle, y: groundY - 50, width: 55, height: 50, wheelFrame: 0 };
+          break;
+        case 'basketball':
+          obstacle = { ...obstacle, y: groundY - 35, width: 35, height: 35, bounce: 0 };
+          break;
+        case 'child':
+          obstacle = { ...obstacle, y: groundY - 45, width: 30, height: 45, frame: 0 };
+          break;
         default:
           obstacle = { ...obstacle, y: groundY - 40, width: 40, height: 40 };
       }
@@ -277,14 +270,47 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       state.obstacles.push(obstacle);
     }
 
-    // Set next spawn distance
     state.nextSpawnDistance = Math.random() * (GAME_CONFIG.MAX_SPAWN_DISTANCE - GAME_CONFIG.MIN_SPAWN_DISTANCE) + GAME_CONFIG.MIN_SPAWN_DISTANCE;
+  }, [canvasSize]);
+
+  // Spawn heart pickup
+  const spawnHeart = useCallback(() => {
+    const state = gameStateRef.current;
+    const groundY = canvasSize.height - GAME_CONFIG.GROUND_HEIGHT;
+    
+    state.hearts.push({
+      x: canvasSize.width + 50,
+      y: groundY - 120 - Math.random() * 60, // Floating above ground
+      width: 30,
+      height: 30,
+      pulse: 0,
+    });
+  }, [canvasSize]);
+
+  // Spawn car
+  const spawnCar = useCallback(() => {
+    const state = gameStateRef.current;
+    const groundY = canvasSize.height - GAME_CONFIG.GROUND_HEIGHT;
+    const goingRight = Math.random() > 0.5;
+    
+    state.cars.push({
+      x: goingRight ? -150 : canvasSize.width + 150,
+      y: groundY + 20,
+      width: 120,
+      height: 50,
+      speed: GAME_CONFIG.CAR_SPEED * (goingRight ? 1 : -1),
+      color: CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)],
+      hasHonked: false,
+    });
+    
+    // Play horn sound
+    soundManager.playCarHorn();
   }, [canvasSize]);
 
   // Jump action
   const jump = useCallback(() => {
     const state = gameStateRef.current;
-    if (state.player.isOnGround) {
+    if (state && state.player.isOnGround) {
       state.player.vy = GAME_CONFIG.JUMP_FORCE;
       state.player.isJumping = true;
       state.player.isOnGround = false;
@@ -295,9 +321,10 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
   // Throw mail action
   const throwMail = useCallback(() => {
     const state = gameStateRef.current;
+    if (!state) return;
     const now = Date.now();
     
-    if (now - state.lastMailThrow < 300) return; // Cooldown
+    if (now - state.lastMailThrow < 300) return;
     
     state.mails.push({
       x: state.player.x + GAME_CONFIG.PLAYER_WIDTH,
@@ -314,6 +341,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
   // Add particles for effects
   const addParticles = useCallback((x, y, color, count = 10) => {
     const state = gameStateRef.current;
+    if (!state) return;
     for (let i = 0; i < count; i++) {
       state.particles.push({
         x,
@@ -366,7 +394,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     };
   }, [isPlaying, jump, throwMail]);
 
-  // Interpolate between two colors
+  // Color interpolation helpers
   const lerpColor = (color1, color2, t) => {
     const c1 = color1.match(/\d+/g).map(Number);
     const c2 = color2.match(/\d+/g).map(Number);
@@ -376,7 +404,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     return `rgb(${r}, ${g}, ${b})`;
   };
 
-  // Convert hex to rgb string
   const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? `rgb(${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)})` : hex;
@@ -392,7 +419,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       ctx.save();
       
       switch (state.season) {
-        case SEASONS.SPRING: // Rain
+        case SEASONS.SPRING:
           ctx.strokeStyle = `rgba(120, 180, 255, ${alpha})`;
           ctx.lineWidth = 2;
           ctx.beginPath();
@@ -401,18 +428,17 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
           ctx.stroke();
           break;
           
-        case SEASONS.SUMMER: // Sand particles
+        case SEASONS.SUMMER:
           ctx.fillStyle = `rgba(210, 180, 140, ${alpha * 0.7})`;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
           break;
           
-        case SEASONS.FALL: // Maple leaves
+        case SEASONS.FALL:
           ctx.translate(p.x, p.y);
           ctx.rotate((p.rotation * Math.PI) / 180);
-          ctx.fillStyle = `rgba(${180 + Math.random() * 40}, ${60 + Math.random() * 40}, 0, ${alpha})`;
-          // Draw simple leaf shape
+          ctx.fillStyle = `rgba(${180 + (p.x % 40)}, ${60 + (p.y % 40)}, 0, ${alpha})`;
           ctx.beginPath();
           ctx.moveTo(0, -p.size / 2);
           ctx.quadraticCurveTo(p.size / 2, -p.size / 4, p.size / 2, 0);
@@ -422,18 +448,11 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
           ctx.fill();
           break;
           
-        case SEASONS.WINTER: // Snow
+        case SEASONS.WINTER:
           ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
-          // Add sparkle
-          if (Math.random() > 0.95) {
-            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 1.5})`;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size * 1.5, 0, Math.PI * 2);
-            ctx.fill();
-          }
           break;
         default:
           break;
@@ -441,6 +460,265 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       
       ctx.restore();
     });
+  };
+
+  // Draw obstacles with new types
+  const drawObstacle = (ctx, obs, state) => {
+    switch (obs.type) {
+      case 'dog':
+        ctx.fillStyle = '#8D6E63';
+        ctx.fillRect(obs.x, obs.y + 10, 40, 25);
+        ctx.beginPath();
+        ctx.arc(obs.x + 45, obs.y + 15, 12, 0, Math.PI * 2);
+        ctx.fill();
+        const legOffset = Math.floor(obs.frame) * 5;
+        ctx.fillRect(obs.x + 5, obs.y + 30, 8, 10 + legOffset);
+        ctx.fillRect(obs.x + 25, obs.y + 30, 8, 10 - legOffset);
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(obs.x + 48, obs.y + 13, 2, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+        
+      case 'pylon':
+        ctx.fillStyle = '#FF6F00';
+        ctx.beginPath();
+        ctx.moveTo(obs.x + obs.width / 2, obs.y);
+        ctx.lineTo(obs.x + obs.width, obs.y + obs.height);
+        ctx.lineTo(obs.x, obs.y + obs.height);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#FFF';
+        ctx.fillRect(obs.x + 5, obs.y + 20, obs.width - 10, 8);
+        ctx.fillRect(obs.x + 3, obs.y + 35, obs.width - 6, 8);
+        break;
+        
+      case 'hydrant':
+        ctx.fillStyle = '#C62828';
+        ctx.fillRect(obs.x + 5, obs.y, 20, obs.height);
+        ctx.fillRect(obs.x, obs.y + 10, obs.width, 15);
+        ctx.beginPath();
+        ctx.arc(obs.x + 15, obs.y, 10, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+        
+      case 'trash':
+        ctx.fillStyle = '#37474F';
+        ctx.fillRect(obs.x, obs.y + 10, obs.width, obs.height - 10);
+        ctx.fillRect(obs.x - 3, obs.y, obs.width + 6, 12);
+        ctx.beginPath();
+        ctx.arc(obs.x + obs.width / 2, obs.y, obs.width / 2 + 3, Math.PI, 0);
+        ctx.fill();
+        break;
+        
+      case 'baby':
+        // Baby carriage
+        // Carriage body
+        ctx.fillStyle = '#E91E63';
+        ctx.beginPath();
+        ctx.ellipse(obs.x + 27, obs.y + 25, 25, 20, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Hood
+        ctx.fillStyle = '#C2185B';
+        ctx.beginPath();
+        ctx.arc(obs.x + 15, obs.y + 15, 20, Math.PI, 0);
+        ctx.fill();
+        // Baby head
+        ctx.fillStyle = '#FFCC80';
+        ctx.beginPath();
+        ctx.arc(obs.x + 20, obs.y + 20, 8, 0, Math.PI * 2);
+        ctx.fill();
+        // Eyes (closed/sleeping)
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(obs.x + 17, obs.y + 19, 2, 0, Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(obs.x + 23, obs.y + 19, 2, 0, Math.PI);
+        ctx.stroke();
+        // Wheels
+        ctx.fillStyle = '#333';
+        const wheelY = obs.y + obs.height - 5;
+        ctx.beginPath();
+        ctx.arc(obs.x + 10, wheelY, 8, 0, Math.PI * 2);
+        ctx.arc(obs.x + 45, wheelY, 8, 0, Math.PI * 2);
+        ctx.fill();
+        // Wheel spokes animation
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        const spokeAngle = (state.distance * 0.1) % (Math.PI * 2);
+        for (let i = 0; i < 4; i++) {
+          const angle = spokeAngle + (i * Math.PI / 2);
+          ctx.beginPath();
+          ctx.moveTo(obs.x + 10, wheelY);
+          ctx.lineTo(obs.x + 10 + Math.cos(angle) * 6, wheelY + Math.sin(angle) * 6);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(obs.x + 45, wheelY);
+          ctx.lineTo(obs.x + 45 + Math.cos(angle) * 6, wheelY + Math.sin(angle) * 6);
+          ctx.stroke();
+        }
+        break;
+        
+      case 'basketball':
+        // Bouncing basketball
+        const bounceOffset = Math.sin(obs.bounce) * 5;
+        ctx.fillStyle = '#FF5722';
+        ctx.beginPath();
+        ctx.arc(obs.x + 17, obs.y + 17 - bounceOffset, 17, 0, Math.PI * 2);
+        ctx.fill();
+        // Lines on ball
+        ctx.strokeStyle = '#BF360C';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(obs.x + 17, obs.y + 17 - bounceOffset, 17, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(obs.x, obs.y + 17 - bounceOffset);
+        ctx.lineTo(obs.x + 34, obs.y + 17 - bounceOffset);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(obs.x + 17, obs.y - bounceOffset);
+        ctx.lineTo(obs.x + 17, obs.y + 34 - bounceOffset);
+        ctx.stroke();
+        break;
+        
+      case 'child':
+        // Simple child figure
+        // Head
+        ctx.fillStyle = '#FFCC80';
+        ctx.beginPath();
+        ctx.arc(obs.x + 15, obs.y + 10, 10, 0, Math.PI * 2);
+        ctx.fill();
+        // Hair
+        ctx.fillStyle = '#5D4037';
+        ctx.beginPath();
+        ctx.arc(obs.x + 15, obs.y + 6, 10, Math.PI, 0);
+        ctx.fill();
+        // Body (t-shirt)
+        ctx.fillStyle = ['#2196F3', '#4CAF50', '#FF9800', '#9C27B0'][Math.floor(obs.x) % 4];
+        ctx.fillRect(obs.x + 5, obs.y + 18, 20, 15);
+        // Shorts
+        ctx.fillStyle = '#1565C0';
+        ctx.fillRect(obs.x + 5, obs.y + 31, 20, 8);
+        // Legs
+        ctx.fillStyle = '#FFCC80';
+        const childLegAnim = Math.sin(obs.frame) * 3;
+        ctx.fillRect(obs.x + 7, obs.y + 38, 6, 10 + childLegAnim);
+        ctx.fillRect(obs.x + 17, obs.y + 38, 6, 10 - childLegAnim);
+        // Face
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(obs.x + 12, obs.y + 9, 1.5, 0, Math.PI * 2);
+        ctx.arc(obs.x + 18, obs.y + 9, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        // Smile
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(obs.x + 15, obs.y + 12, 4, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+        break;
+        
+      default:
+        ctx.fillStyle = '#757575';
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+    }
+  };
+
+  // Draw car
+  const drawCar = (ctx, car) => {
+    const direction = car.speed > 0 ? 1 : -1;
+    
+    ctx.save();
+    if (direction < 0) {
+      ctx.translate(car.x + car.width, car.y);
+      ctx.scale(-1, 1);
+      ctx.translate(0, -car.y);
+    }
+    
+    const drawX = direction < 0 ? 0 : car.x;
+    
+    // Car body
+    ctx.fillStyle = car.color;
+    ctx.beginPath();
+    ctx.roundRect(drawX, car.y - 20, car.width, 35, 5);
+    ctx.fill();
+    
+    // Car top
+    ctx.fillStyle = car.color;
+    ctx.beginPath();
+    ctx.roundRect(drawX + 25, car.y - 45, 60, 28, 8);
+    ctx.fill();
+    
+    // Windows
+    ctx.fillStyle = '#81D4FA';
+    ctx.beginPath();
+    ctx.roundRect(drawX + 30, car.y - 42, 22, 20, 3);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(drawX + 58, car.y - 42, 22, 20, 3);
+    ctx.fill();
+    
+    // Headlights
+    ctx.fillStyle = '#FFEB3B';
+    ctx.beginPath();
+    ctx.ellipse(drawX + car.width - 5, car.y - 5, 6, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Taillights
+    ctx.fillStyle = '#F44336';
+    ctx.beginPath();
+    ctx.ellipse(drawX + 5, car.y - 5, 5, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Wheels
+    ctx.fillStyle = '#212121';
+    ctx.beginPath();
+    ctx.arc(drawX + 25, car.y + 15, 12, 0, Math.PI * 2);
+    ctx.arc(drawX + car.width - 25, car.y + 15, 12, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Hubcaps
+    ctx.fillStyle = '#9E9E9E';
+    ctx.beginPath();
+    ctx.arc(drawX + 25, car.y + 15, 6, 0, Math.PI * 2);
+    ctx.arc(drawX + car.width - 25, car.y + 15, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  };
+
+  // Draw heart pickup
+  const drawHeart = (ctx, heart) => {
+    const pulse = Math.sin(heart.pulse) * 3;
+    const size = 15 + pulse;
+    
+    ctx.save();
+    ctx.translate(heart.x + heart.width / 2, heart.y + heart.height / 2);
+    
+    // Glow effect
+    ctx.fillStyle = 'rgba(255, 100, 100, 0.3)';
+    ctx.beginPath();
+    ctx.arc(0, 0, size + 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Heart shape
+    ctx.fillStyle = '#E91E63';
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.3);
+    ctx.bezierCurveTo(-size, -size * 0.5, -size, size * 0.5, 0, size);
+    ctx.bezierCurveTo(size, size * 0.5, size, -size * 0.5, 0, size * 0.3);
+    ctx.fill();
+    
+    // Shine
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath();
+    ctx.arc(-size * 0.3, -size * 0.1, size * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
   };
 
   // Main game loop
@@ -453,7 +731,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
     initGame();
 
     const gameLoop = (currentTime) => {
-      const deltaTime = (currentTime - lastTimeRef.current) / 1000; // Convert to seconds
+      const deltaTime = (currentTime - lastTimeRef.current) / 1000;
       lastTimeRef.current = currentTime;
 
       if (!isPlaying) {
@@ -462,20 +740,22 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       }
 
       const state = gameStateRef.current;
+      if (!state) {
+        animationRef.current = requestAnimationFrame(gameLoop);
+        return;
+      }
+      
       const groundY = canvasSize.height - GAME_CONFIG.GROUND_HEIGHT;
 
       // ============ UPDATE TIME & WEATHER ============
       state.gameTime += deltaTime;
       
-      // Day/Night cycle (2 minutes = 120 seconds per cycle)
       const cycleProgress = (state.gameTime % GAME_CONFIG.DAY_NIGHT_CYCLE_DURATION) / GAME_CONFIG.DAY_NIGHT_CYCLE_DURATION;
       state.dayNightProgress = cycleProgress;
       
-      // Check for new cycle
       const newCycleCount = Math.floor(state.gameTime / GAME_CONFIG.DAY_NIGHT_CYCLE_DURATION);
       if (newCycleCount > state.cycleCount) {
         state.cycleCount = newCycleCount;
-        // Check for season change (every 15 cycles)
         const newSeason = Math.floor(state.cycleCount / GAME_CONFIG.CYCLES_PER_SEASON) % 4;
         if (newSeason !== state.season) {
           state.season = newSeason;
@@ -487,10 +767,9 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       state.nextStormChange -= deltaTime;
       if (state.nextStormChange <= 0) {
         state.isStorming = !state.isStorming;
-        state.nextStormChange = Math.random() * 30 + (state.isStorming ? 10 : 20); // Storm lasts 10-40s, clear 20-50s
+        state.nextStormChange = Math.random() * 30 + (state.isStorming ? 10 : 20);
       }
       
-      // Update storm intensity (smooth transition)
       const targetIntensity = state.isStorming ? 1 : 0;
       state.stormIntensity += (targetIntensity - state.stormIntensity) * 0.02;
       
@@ -499,20 +778,20 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         p.wobble += p.wobbleSpeed;
         
         switch (state.season) {
-          case SEASONS.SPRING: // Rain - falls straight down fast
+          case SEASONS.SPRING:
             p.y += p.speed * state.stormIntensity;
-            p.x -= 1; // Slight wind
+            p.x -= 1;
             break;
-          case SEASONS.SUMMER: // Sand - blows horizontally
+          case SEASONS.SUMMER:
             p.y += p.speed * 0.3 * state.stormIntensity;
             p.x -= p.horizontal * state.stormIntensity;
             break;
-          case SEASONS.FALL: // Leaves - flutter down
+          case SEASONS.FALL:
             p.y += p.speed * state.stormIntensity;
             p.x -= (2 + Math.sin(p.wobble) * 2) * state.stormIntensity;
             p.rotation += p.rotationSpeed * state.stormIntensity;
             break;
-          case SEASONS.WINTER: // Snow - drifts down slowly
+          case SEASONS.WINTER:
             p.y += p.speed * state.stormIntensity;
             p.x += Math.sin(p.wobble) * 0.5 * state.stormIntensity;
             break;
@@ -520,7 +799,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
             break;
         }
         
-        // Reset particle if off screen
         if (p.y > canvasSize.height || p.x < -50) {
           p.x = Math.random() * canvasSize.width * 1.5;
           p.y = -20;
@@ -530,21 +808,30 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         }
       });
 
-      // ============ GAME LOGIC ============
-      
-      // Update game speed
-      state.speed = Math.min(GAME_CONFIG.MAX_SPEED, state.speed + GAME_CONFIG.SPEED_INCREMENT);
+      // ============ SPAWN HEARTS ============
+      state.nextHeartSpawn -= deltaTime;
+      if (state.nextHeartSpawn <= 0 && state.lives < GAME_CONFIG.MAX_LIVES) {
+        spawnHeart();
+        state.nextHeartSpawn = GAME_CONFIG.HEART_SPAWN_INTERVAL + Math.random() * 30;
+      }
 
-      // Update distance and score
+      // ============ SPAWN CARS ============
+      state.nextCarSpawn -= deltaTime;
+      if (state.nextCarSpawn <= 0) {
+        spawnCar();
+        state.nextCarSpawn = GAME_CONFIG.CAR_SPAWN_MIN_INTERVAL + Math.random() * (GAME_CONFIG.CAR_SPAWN_MAX_INTERVAL - GAME_CONFIG.CAR_SPAWN_MIN_INTERVAL);
+      }
+
+      // ============ GAME LOGIC ============
+      state.speed = Math.min(GAME_CONFIG.MAX_SPEED, state.speed + GAME_CONFIG.SPEED_INCREMENT);
       state.distance += state.speed / 10;
       state.score += GAME_CONFIG.DISTANCE_POINTS;
 
-      // Update player physics
+      // Player physics
       state.player.vy += GAME_CONFIG.GRAVITY;
       state.player.vy = Math.min(state.player.vy, GAME_CONFIG.MAX_FALL_SPEED);
       state.player.y += state.player.vy;
 
-      // Ground collision
       const playerGroundY = groundY - GAME_CONFIG.PLAYER_HEIGHT;
       if (state.player.y >= playerGroundY) {
         state.player.y = playerGroundY;
@@ -561,7 +848,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         }
       }
 
-      // Spawn new objects
+      // Spawn objects
       state.nextSpawnDistance -= state.speed;
       if (state.nextSpawnDistance <= 0) {
         spawnGameObject();
@@ -585,12 +872,95 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         }
       });
 
+      // Update hearts
+      state.hearts = state.hearts.filter(heart => {
+        heart.x -= state.speed;
+        heart.pulse += 0.1;
+        
+        // Check collection
+        const playerBox = {
+          x: state.player.x,
+          y: state.player.y,
+          width: GAME_CONFIG.PLAYER_WIDTH,
+          height: GAME_CONFIG.PLAYER_HEIGHT,
+        };
+        
+        if (
+          playerBox.x < heart.x + heart.width &&
+          playerBox.x + playerBox.width > heart.x &&
+          playerBox.y < heart.y + heart.height &&
+          playerBox.y + playerBox.height > heart.y
+        ) {
+          if (state.lives < GAME_CONFIG.MAX_LIVES) {
+            state.lives++;
+            soundManager.playHeal();
+            addParticles(heart.x + heart.width / 2, heart.y + heart.height / 2, '#E91E63', 15);
+          }
+          return false;
+        }
+        
+        return heart.x > -50;
+      });
+
+      // Update cars
+      state.cars = state.cars.filter(car => {
+        car.x += car.speed;
+        
+        // Check collision with player
+        if (!state.isInvincible) {
+          const playerBox = {
+            x: state.player.x + 10,
+            y: state.player.y + 10,
+            width: GAME_CONFIG.PLAYER_WIDTH - 20,
+            height: GAME_CONFIG.PLAYER_HEIGHT - 10,
+          };
+          
+          const carBox = {
+            x: car.x,
+            y: car.y - 45,
+            width: car.width,
+            height: 60,
+          };
+          
+          if (
+            playerBox.x < carBox.x + carBox.width &&
+            playerBox.x + playerBox.width > carBox.x &&
+            playerBox.y < carBox.y + carBox.height &&
+            playerBox.y + playerBox.height > carBox.y
+          ) {
+            state.lives -= 2; // Cars do 2 damage!
+            state.isInvincible = true;
+            state.invincibleTimer = 120;
+            addParticles(state.player.x + GAME_CONFIG.PLAYER_WIDTH / 2, state.player.y + GAME_CONFIG.PLAYER_HEIGHT / 2, '#FF6B6B', 20);
+            soundManager.playThud();
+            
+            if (state.lives <= 0) {
+              state.lives = 0;
+              soundManager.stopMusic();
+              onGameOver(state.score, state.deliveries, Math.floor(state.distance));
+            }
+          }
+        }
+        
+        // Remove if off screen
+        if (car.speed > 0) {
+          return car.x < canvasSize.width + 200;
+        } else {
+          return car.x > -200;
+        }
+      });
+
       // Update obstacles
       state.obstacles = state.obstacles.filter(obs => {
         obs.x -= state.speed;
-        if (obs.type === 'dog') obs.frame = (obs.frame + 0.2) % 2;
         
-        // Collision detection with player
+        // Animate specific obstacles
+        if (obs.type === 'dog') obs.frame = (obs.frame + 0.2) % 2;
+        if (obs.type === 'basketball') obs.bounce += 0.15;
+        if (obs.type === 'child') obs.frame += 0.1;
+        if (obs.type === 'baby') obs.wheelFrame += 0.1;
+        
+        // Collision detection
         if (!state.isInvincible) {
           const playerBox = {
             x: state.player.x + 10,
@@ -610,13 +980,17 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
             state.invincibleTimer = 120;
             addParticles(state.player.x + GAME_CONFIG.PLAYER_WIDTH / 2, state.player.y + GAME_CONFIG.PLAYER_HEIGHT / 2, '#FF6B6B', 15);
             
+            // Play appropriate sound
             if (obs.type === 'dog') {
               soundManager.playBark();
+            } else if (obs.type === 'baby') {
+              soundManager.playBabyCry();
             } else {
               soundManager.playThud();
             }
             
             if (state.lives <= 0) {
+              state.lives = 0;
               soundManager.stopMusic();
               onGameOver(state.score, state.deliveries, Math.floor(state.distance));
             }
@@ -648,7 +1022,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
             mail.y < box.y + box.height + 20
           ) {
             box.hasDelivery = true;
-            box.animating = true;
             state.deliveries++;
             state.score += GAME_CONFIG.DELIVERY_POINTS;
             addParticles(box.x + box.width / 2, box.y, '#4ECDC4', 20);
@@ -676,12 +1049,9 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
 
       const seasonConfig = SEASON_CONFIG[state.season];
-      
-      // Calculate day/night interpolation (0 = day, 1 = night)
-      // Use sine wave for smooth transition
       const nightAmount = (Math.sin(state.dayNightProgress * Math.PI * 2 - Math.PI / 2) + 1) / 2;
       
-      // Draw sky gradient with day/night cycle
+      // Sky
       const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY);
       const skyTopDay = hexToRgb(seasonConfig.skyDay[0]);
       const skyBottomDay = hexToRgb(seasonConfig.skyDay[1]);
@@ -693,28 +1063,24 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, canvasSize.width, groundY);
 
-      // Draw sun/moon
+      // Sun/Moon
       const celestialX = canvasSize.width - 100;
       const celestialY = 50 + Math.sin(state.dayNightProgress * Math.PI * 2) * 30;
       
       if (nightAmount < 0.5) {
-        // Sun
         ctx.fillStyle = `rgba(255, 217, 61, ${1 - nightAmount * 2})`;
         ctx.beginPath();
         ctx.arc(celestialX, celestialY, 50, 0, Math.PI * 2);
         ctx.fill();
-        // Sun glow
         ctx.fillStyle = `rgba(255, 217, 61, ${(1 - nightAmount * 2) * 0.3})`;
         ctx.beginPath();
         ctx.arc(celestialX, celestialY, 70, 0, Math.PI * 2);
         ctx.fill();
       } else {
-        // Moon
         ctx.fillStyle = `rgba(230, 230, 250, ${(nightAmount - 0.5) * 2})`;
         ctx.beginPath();
         ctx.arc(celestialX, celestialY, 40, 0, Math.PI * 2);
         ctx.fill();
-        // Moon craters
         ctx.fillStyle = `rgba(200, 200, 220, ${(nightAmount - 0.5) * 2})`;
         ctx.beginPath();
         ctx.arc(celestialX - 10, celestialY - 5, 8, 0, Math.PI * 2);
@@ -722,7 +1088,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.fill();
       }
 
-      // Draw stars at night
+      // Stars
       if (nightAmount > 0.3) {
         const starAlpha = (nightAmount - 0.3) / 0.7;
         ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha * 0.8})`;
@@ -736,7 +1102,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         }
       }
 
-      // Draw clouds (darker at night)
+      // Clouds
       const cloudAlpha = 1 - nightAmount * 0.5;
       ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * cloudAlpha})`;
       state.clouds.forEach(cloud => {
@@ -745,13 +1111,11 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.fill();
       });
 
-      // Draw houses (background) with lights at night
+      // Houses
       state.houses.forEach(house => {
         const houseBottom = groundY - 30;
-        // House body
         ctx.fillStyle = house.color;
         ctx.fillRect(house.x, houseBottom - house.height, house.width, house.height);
-        // Roof
         ctx.fillStyle = house.roofColor;
         ctx.beginPath();
         ctx.moveTo(house.x - 10, houseBottom - house.height);
@@ -759,107 +1123,57 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.lineTo(house.x + house.width + 10, houseBottom - house.height);
         ctx.closePath();
         ctx.fill();
-        // Door
         ctx.fillStyle = '#5D4037';
         ctx.fillRect(house.x + house.width / 2 - 10, houseBottom - 35, 20, 35);
-        // Windows (glow at night)
         const windowGlow = nightAmount > 0.4 ? (nightAmount - 0.4) / 0.6 : 0;
         ctx.fillStyle = windowGlow > 0 ? `rgba(255, 220, 100, ${0.8 * windowGlow})` : '#81D4FA';
         ctx.fillRect(house.x + 15, houseBottom - house.height + 20, 20, 20);
         ctx.fillRect(house.x + house.width - 35, houseBottom - house.height + 20, 20, 20);
       });
 
-      // Draw grass with seasonal colors
+      // Grass
       const grassGradient = ctx.createLinearGradient(0, groundY - 30, 0, groundY);
       const grassLight = hexToRgb(seasonConfig.grassColor[0]);
       const grassDark = hexToRgb(seasonConfig.grassColor[1]);
-      // Darken grass at night
       grassGradient.addColorStop(0, lerpColor(grassLight, 'rgb(40, 60, 40)', nightAmount * 0.5));
       grassGradient.addColorStop(1, lerpColor(grassDark, 'rgb(30, 50, 30)', nightAmount * 0.5));
       ctx.fillStyle = grassGradient;
       ctx.fillRect(0, groundY - 30, canvasSize.width, 30);
 
-      // Draw road
+      // Road
       const roadColor = nightAmount > 0.5 ? '#404040' : '#616161';
       ctx.fillStyle = roadColor;
       ctx.fillRect(0, groundY, canvasSize.width, GAME_CONFIG.GROUND_HEIGHT);
-      // Road markings
       ctx.fillStyle = '#FFD54F';
       const markingOffset = (state.distance * 5) % 80;
       for (let i = -1; i < canvasSize.width / 80 + 1; i++) {
         ctx.fillRect(i * 80 - markingOffset, groundY + GAME_CONFIG.GROUND_HEIGHT / 2 - 3, 40, 6);
       }
 
-      // Draw sidewalk
+      // Sidewalk
       ctx.fillStyle = nightAmount > 0.5 ? '#909090' : '#BDBDBD';
       ctx.fillRect(0, groundY - 5, canvasSize.width, 10);
 
-      // Draw mailboxes
+      // Draw cars (behind player)
+      state.cars.forEach(car => drawCar(ctx, car));
+
+      // Mailboxes
       state.mailboxes.forEach(box => {
-        // Post
         ctx.fillStyle = '#5D4037';
         ctx.fillRect(box.x + 10, box.y, 10, box.height);
-        // Box
         ctx.fillStyle = box.hasDelivery ? '#4CAF50' : '#1565C0';
         ctx.fillRect(box.x, box.y, box.width, 25);
-        // Flag
         ctx.fillStyle = box.hasDelivery ? '#4CAF50' : '#F44336';
         ctx.fillRect(box.x + box.width - 5, box.y + 5, 8, 15);
       });
 
-      // Draw obstacles
-      state.obstacles.forEach(obs => {
-        switch (obs.type) {
-          case 'dog':
-            ctx.fillStyle = '#8D6E63';
-            ctx.fillRect(obs.x, obs.y + 10, 40, 25);
-            ctx.beginPath();
-            ctx.arc(obs.x + 45, obs.y + 15, 12, 0, Math.PI * 2);
-            ctx.fill();
-            const legOffset = Math.floor(obs.frame) * 5;
-            ctx.fillRect(obs.x + 5, obs.y + 30, 8, 10 + legOffset);
-            ctx.fillRect(obs.x + 25, obs.y + 30, 8, 10 - legOffset);
-            ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(obs.x + 48, obs.y + 13, 2, 0, Math.PI * 2);
-            ctx.fill();
-            break;
-          case 'pylon':
-            ctx.fillStyle = '#FF6F00';
-            ctx.beginPath();
-            ctx.moveTo(obs.x + obs.width / 2, obs.y);
-            ctx.lineTo(obs.x + obs.width, obs.y + obs.height);
-            ctx.lineTo(obs.x, obs.y + obs.height);
-            ctx.closePath();
-            ctx.fill();
-            ctx.fillStyle = '#FFF';
-            ctx.fillRect(obs.x + 5, obs.y + 20, obs.width - 10, 8);
-            ctx.fillRect(obs.x + 3, obs.y + 35, obs.width - 6, 8);
-            break;
-          case 'hydrant':
-            ctx.fillStyle = '#C62828';
-            ctx.fillRect(obs.x + 5, obs.y, 20, obs.height);
-            ctx.fillRect(obs.x, obs.y + 10, obs.width, 15);
-            ctx.beginPath();
-            ctx.arc(obs.x + 15, obs.y, 10, 0, Math.PI * 2);
-            ctx.fill();
-            break;
-          case 'trash':
-            ctx.fillStyle = '#37474F';
-            ctx.fillRect(obs.x, obs.y + 10, obs.width, obs.height - 10);
-            ctx.fillRect(obs.x - 3, obs.y, obs.width + 6, 12);
-            ctx.beginPath();
-            ctx.arc(obs.x + obs.width / 2, obs.y, obs.width / 2 + 3, Math.PI, 0);
-            ctx.fill();
-            break;
-          default:
-            ctx.fillStyle = '#757575';
-            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-        }
-      });
+      // Hearts
+      state.hearts.forEach(heart => drawHeart(ctx, heart));
 
-      // Draw mails
-      ctx.fillStyle = '#FFF';
+      // Obstacles
+      state.obstacles.forEach(obs => drawObstacle(ctx, obs, state));
+
+      // Mails
       state.mails.forEach(mail => {
         ctx.save();
         ctx.translate(mail.x + 10, mail.y + 7);
@@ -877,7 +1191,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.restore();
       });
 
-      // Draw player (Mailman)
+      // Player
       const px = state.player.x;
       const py = state.player.y;
       const flash = state.isInvincible && Math.floor(state.invincibleTimer / 5) % 2 === 0;
@@ -925,10 +1239,10 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.restore();
       }
 
-      // Draw weather particles on top
+      // Weather
       drawWeatherParticles(ctx, state, seasonConfig);
 
-      // Draw storm overlay
+      // Storm overlay
       if (state.stormIntensity > 0.1) {
         const overlayAlpha = state.stormIntensity * 0.15;
         ctx.fillStyle = state.season === SEASONS.WINTER 
@@ -939,7 +1253,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
       }
 
-      // Draw effect particles
+      // Effect particles
       state.particles.forEach(p => {
         ctx.globalAlpha = p.life;
         ctx.fillStyle = p.color;
@@ -949,8 +1263,8 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       });
       ctx.globalAlpha = 1;
 
-      // Draw season/time indicator
-      ctx.fillStyle = `rgba(0, 0, 0, 0.5)`;
+      // Season/time indicator
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.fillRect(canvasSize.width - 140, canvasSize.height - 45, 130, 35);
       ctx.fillStyle = '#FFF';
       ctx.font = '14px Nunito, sans-serif';
@@ -973,7 +1287,7 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [canvasSize, isPlaying, initGame, spawnGameObject, onGameOver, onScoreUpdate, addParticles]);
+  }, [canvasSize, isPlaying, initGame, spawnGameObject, spawnHeart, spawnCar, onGameOver, onScoreUpdate, addParticles]);
 
   return (
     <canvas
