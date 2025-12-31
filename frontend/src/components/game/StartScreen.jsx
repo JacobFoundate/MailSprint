@@ -91,7 +91,7 @@ const StartScreen = ({ onStart, highScore }) => {
           <div className="flex items-center justify-center gap-3 mb-2">
             <Mail className="w-10 h-10 text-accent animate-wiggle" />
             <h1 className="font-fredoka text-6xl sm:text-7xl lg:text-8xl text-foreground text-shadow-game">
-              Mail<span className="text-primary">Run</span>
+              Mail<span className="text-primary">Sprint</span>
             </h1>
             <Mail className="w-10 h-10 text-accent animate-wiggle" style={{ animationDelay: '0.25s' }} />
           </div>
