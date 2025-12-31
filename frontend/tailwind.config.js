@@ -131,6 +131,11 @@ module.exports = {
                                 '0%': { transform: 'scale(1)' },
                                 '50%': { transform: 'scale(1.4)' },
                                 '100%': { transform: 'scale(1)' }
+                        },
+                        'shake': {
+                                '0%, 100%': { transform: 'translateX(0)' },
+                                '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-8px)' },
+                                '20%, 40%, 60%, 80%': { transform: 'translateX(8px)' }
                         }
                 },
                 animation: {
@@ -141,7 +146,8 @@ module.exports = {
                         'slide-up': 'slide-up 0.4s ease-out',
                         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
                         'wiggle': 'wiggle 0.5s ease-in-out infinite',
-                        'score-pop': 'score-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                        'score-pop': 'score-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        'shake': 'shake 0.5s ease-in-out'
                 }
         }
   },
