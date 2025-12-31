@@ -371,26 +371,30 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     }
   }, []);
 
-  // Input handlers
+  // Expose jump and throw methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    jump: () => jump(),
+    throwMail: () => doThrowMail(),
+  }), [jump, doThrowMail]);
+
+  // Input handlers - removed touch handler since we now have dedicated buttons
   useEffect(() => {
     if (!isPlaying) return;
     const handleKeyDown = (e) => {
       if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
       if (e.code === 'KeyE') { e.preventDefault(); doThrowMail(); }
     };
-    const handleClick = () => doThrowMail();
-    const handleTouch = (e) => {
-      const touch = e.touches[0];
-      if (touch.clientY < window.innerHeight / 2) jump();
-      else doThrowMail();
+    const handleClick = (e) => {
+      // Only fire on desktop (no touch)
+      if (window.matchMedia('(pointer: fine)').matches) {
+        doThrowMail();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('click', handleClick);
-    window.addEventListener('touchstart', handleTouch);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('click', handleClick);
-      window.removeEventListener('touchstart', handleTouch);
     };
   }, [isPlaying, jump, doThrowMail]);
 
