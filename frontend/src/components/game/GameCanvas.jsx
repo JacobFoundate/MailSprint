@@ -885,26 +885,14 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       // Check invincibility powerup
       const hasInvincibility = state.activePowerups.invincibility > 0;
 
-      // Update road hazards
+      // Update road hazards - NO DAMAGE, just visual distractions on the road
       state.roadHazards = state.roadHazards.filter(hazard => {
         hazard.x += hazard.speed * speedMod;
         hazard.rotation += Math.abs(hazard.speed) * 0.05;
         if (hazard.bouncePhase !== undefined) hazard.bouncePhase += 0.2;
         if (hazard.pedalPhase !== undefined) hazard.pedalPhase += 0.3;
         
-        if (!state.isInvincible && !hasInvincibility) {
-          const pb = { x: state.player.x + 10, y: state.player.y + 10, width: GAME_CONFIG.PLAYER_WIDTH - 20, height: GAME_CONFIG.PLAYER_HEIGHT - 10 };
-          const hb = { x: hazard.x, y: hazard.y - (hazard.type === 'car' ? 45 : 30), width: hazard.width || 50, height: hazard.type === 'car' ? 60 : 50 };
-          if (pb.x < hb.x + hb.width && pb.x + pb.width > hb.x && pb.y < hb.y + hb.height && pb.y + pb.height > hb.y) {
-            const damage = hazard.type === 'car' ? 2 : 1;
-            state.lives -= damage;
-            state.isInvincible = true;
-            state.invincibleTimer = 120;
-            addParticles(state.player.x + GAME_CONFIG.PLAYER_WIDTH / 2, state.player.y + GAME_CONFIG.PLAYER_HEIGHT / 2, '#FF6B6B', 20);
-            soundManager.playThud();
-            if (state.lives <= 0) { state.lives = 0; soundManager.stopMusic(); onGameOver(state.score, state.deliveries, Math.floor(state.distance)); }
-          }
-        }
+        // No collision damage - mailman is on sidewalk, hazards are on road
         return hazard.speed > 0 ? hazard.x < canvasSize.width + 200 : hazard.x > -200;
       });
 
