@@ -1154,8 +1154,14 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * (1 - nightAmount * 0.5)})`;
       state.clouds.forEach(c => { ctx.beginPath(); ctx.ellipse(c.x, c.y, c.width / 2, c.width / 4, 0, 0, Math.PI * 2); ctx.fill(); });
 
+      // Birds in the sky
+      state.birds.forEach(bird => drawBird(ctx, bird));
+
       // Rainbow platforms
       state.rainbowPlatforms.forEach(p => drawRainbowPlatform(ctx, p));
+
+      // Trees (behind houses)
+      state.trees.forEach(tree => drawTree(ctx, tree, groundY, nightAmount));
 
       // Houses - FIXED WINDOWS
       state.houses.forEach(h => {
