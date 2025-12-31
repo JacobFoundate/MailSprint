@@ -266,6 +266,114 @@ class SoundManager {
   }
 
   /**
+   * Baby cry sound
+   */
+  playBabyCry() {
+    if (!this.initialized || this.isMuted) return;
+    this.resume();
+    
+    const now = this.audioContext.currentTime;
+    
+    // Create wavering cry sound
+    for (let cry = 0; cry < 3; cry++) {
+      const startTime = now + (cry * 0.2);
+      
+      const osc = this.audioContext.createOscillator();
+      osc.type = 'sawtooth';
+      // Wavering frequency for cry effect
+      osc.frequency.setValueAtTime(600, startTime);
+      osc.frequency.exponentialRampToValueAtTime(800, startTime + 0.05);
+      osc.frequency.exponentialRampToValueAtTime(500, startTime + 0.1);
+      osc.frequency.exponentialRampToValueAtTime(700, startTime + 0.15);
+      
+      const formant = this.audioContext.createBiquadFilter();
+      formant.type = 'bandpass';
+      formant.frequency.value = 1200;
+      formant.Q.value = 3;
+      
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
+      gain.gain.setValueAtTime(0.25, startTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.18);
+      
+      osc.connect(formant);
+      formant.connect(gain);
+      gain.connect(this.sfxGain);
+      
+      osc.start(startTime);
+      osc.stop(startTime + 0.2);
+    }
+  }
+
+  /**
+   * Car horn sound
+   */
+  playCarHorn() {
+    if (!this.initialized || this.isMuted) return;
+    this.resume();
+    
+    const now = this.audioContext.currentTime;
+    
+    // Two-tone horn
+    const frequencies = [350, 440];
+    
+    frequencies.forEach(freq => {
+      const osc = this.audioContext.createOscillator();
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.setValueAtTime(0.15, now + 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+      
+      const filter = this.audioContext.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1000;
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+      
+      osc.start(now);
+      osc.stop(now + 0.5);
+    });
+  }
+
+  /**
+   * Heal/pickup sound - pleasant ascending chime
+   */
+  playHeal() {
+    if (!this.initialized || this.isMuted) return;
+    this.resume();
+    
+    const now = this.audioContext.currentTime;
+    
+    // Ascending arpeggio
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    
+    notes.forEach((freq, i) => {
+      const osc = this.audioContext.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      
+      const startTime = now + (i * 0.08);
+      const gain = this.audioContext.createGain();
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+      
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      
+      osc.start(startTime);
+      osc.stop(startTime + 0.3);
+    });
+  }
+
+  /**
    * Jump sound - quick upward sweep
    */
   playJump() {
