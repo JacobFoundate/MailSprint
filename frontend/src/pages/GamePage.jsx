@@ -9,7 +9,7 @@ const GamePage = () => {
   const [gameState, setGameState] = useState('start'); // 'start', 'playing', 'paused', 'gameover'
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(() => {
-    const saved = localStorage.getItem('mailmanHighScore');
+    const saved = localStorage.getItem('mailsprintHighScore');
     return saved ? parseInt(saved, 10) : 0;
   });
   const [deliveries, setDeliveries] = useState(0);
@@ -52,7 +52,7 @@ const GamePage = () => {
     
     if (finalScore > highScore) {
       setHighScore(finalScore);
-      localStorage.setItem('mailmanHighScore', finalScore.toString());
+      localStorage.setItem('mailsprintHighScore', finalScore.toString());
     }
     
     setGameState('gameover');
