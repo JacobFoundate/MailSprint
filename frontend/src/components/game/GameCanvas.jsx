@@ -31,6 +31,10 @@ const GAME_CONFIG = {
   POWERUP_TYPES: ['rapidFire', 'straightShot', 'doubleShot', 'speedBoost', 'slowMotion', 'superJump', 'invincibility', 'knockback', 'superman'],
   LEPRECHAUN_SPAWN_INTERVAL: 60, // Every 60-90 seconds
   RAINBOW_PLATFORM_DURATION: 60,
+  PEDESTRIAN_MIN_INTERVAL: 8,
+  PEDESTRIAN_MAX_INTERVAL: 20,
+  BIRD_MIN_INTERVAL: 5,
+  BIRD_MAX_INTERVAL: 15,
 };
 
 const SEASONS = { SPRING: 0, SUMMER: 1, FALL: 2, WINTER: 3 };
@@ -65,6 +69,14 @@ const generateHouses = (width) => Array.from({ length: 5 }, (_, i) => ({
   x: i * 400 + Math.random() * 100, width: Math.random() * 60 + 80, height: Math.random() * 40 + 80,
   color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][Math.floor(Math.random() * 5)],
   roofColor: ['#C0392B', '#2C3E50', '#8E44AD', '#27AE60', '#E74C3C'][Math.floor(Math.random() * 5)],
+}));
+
+const generateTrees = (width) => Array.from({ length: 8 }, (_, i) => ({
+  x: i * 300 + Math.random() * 150 + 50,
+  height: Math.random() * 40 + 60,
+  trunkWidth: Math.random() * 8 + 12,
+  foliageType: Math.floor(Math.random() * 3), // 0=round, 1=pine, 2=oak
+  foliageColor: ['#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A'][Math.floor(Math.random() * 5)],
 }));
 
 const generateWeatherParticles = (width, height, season) => Array.from({ length: GAME_CONFIG.WEATHER_PARTICLE_COUNT }, () => {
