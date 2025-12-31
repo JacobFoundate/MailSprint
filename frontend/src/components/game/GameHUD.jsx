@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { Mail, MapPin, Pause, Play, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const GameHUD = ({ score, deliveries, distance, isPaused, onPause, lives = 3 }) => {
+  const prevScoreRef = useRef(score);
   const [scoreAnimating, setScoreAnimating] = useState(false);
-  const [prevScore, setPrevScore] = useState(score);
 
-  useEffect(() => {
-    if (score > prevScore) {
+  // Use useMemo to detect score changes without causing render loops
+  useMemo(() => {
+    if (score > prevScoreRef.current) {
       setScoreAnimating(true);
       const timer = setTimeout(() => setScoreAnimating(false), 400);
-      setPrevScore(score);
+      prevScoreRef.current = score;
       return () => clearTimeout(timer);
     }
-  }, [score, prevScore]);
+  }, [score]);
 
   return (
     <div className="absolute top-0 left-0 right-0 z-30 p-4">

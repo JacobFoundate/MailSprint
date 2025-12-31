@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Trophy, Mail, MapPin, RotateCcw, Share2, Star, Sparkles } from 'lucide-react';
@@ -12,13 +12,22 @@ const GameOverScreen = ({
   isNewHighScore
 }) => {
   const [animateIn, setAnimateIn] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+
+  // Pre-generate confetti positions to avoid Math.random during render
+  const confettiItems = useMemo(() => {
+    return [...Array(50)].map((_, i) => ({
+      id: i,
+      left: `${(i * 2.1) % 100}%`,
+      top: `${(i * 1.7 + 10) % 100}%`,
+      backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFD93D', '#45B7D1', '#96CEB4'][i % 5],
+      animationDelay: `${(i * 0.04) % 2}s`,
+      animationDuration: `${1 + (i * 0.03) % 2}s`,
+      transform: `rotate(${(i * 7.2) % 360}deg)`,
+    }));
+  }, []);
 
   useEffect(() => {
     setAnimateIn(true);
-    if (isNewHighScore) {
-      setShowConfetti(true);
-    }
     
     const handleKeyPress = (e) => {
       if (e.code === 'Space' || e.code === 'Enter') {
@@ -29,7 +38,7 @@ const GameOverScreen = ({
     
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [onRestart, isNewHighScore]);
+  }, [onRestart]);
 
   const handleShare = () => {
     const text = `I scored ${score.toLocaleString()} points in MailRun! Delivered ${deliveries} letters and ran ${distance}m. Can you beat my score?`;
@@ -46,19 +55,19 @@ const GameOverScreen = ({
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-foreground/50 backdrop-blur-sm z-50">
       {/* Confetti effect for new high score */}
-      {showConfetti && (
+      {isNewHighScore && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[...Array(50)].map((_, i) => (
+          {confettiItems.map((item) => (
             <div
-              key={i}
+              key={item.id}
               className="absolute w-3 h-3 rounded-sm animate-bounce"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                backgroundColor: ['#FF6B6B', '#4ECDC4', '#FFD93D', '#45B7D1', '#96CEB4'][i % 5],
-                animationDelay: `${Math.random() * 2}s`,
-                animationDuration: `${Math.random() * 2 + 1}s`,
-                transform: `rotate(${Math.random() * 360}deg)`,
+                left: item.left,
+                top: item.top,
+                backgroundColor: item.backgroundColor,
+                animationDelay: item.animationDelay,
+                animationDuration: item.animationDuration,
+                transform: item.transform,
               }}
             />
           ))}

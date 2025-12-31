@@ -31,6 +31,35 @@ const GAME_CONFIG = {
   BONUS_MULTIPLIER: 1.5,
 };
 
+// Generate initial clouds
+const generateClouds = (width) => {
+  const clouds = [];
+  for (let i = 0; i < 6; i++) {
+    clouds.push({
+      x: Math.random() * width * 1.5,
+      y: Math.random() * 150 + 30,
+      width: Math.random() * 80 + 60,
+      speed: Math.random() * 0.5 + 0.2,
+    });
+  }
+  return clouds;
+};
+
+// Generate initial houses
+const generateHouses = (width) => {
+  const houses = [];
+  for (let i = 0; i < 5; i++) {
+    houses.push({
+      x: i * 400 + Math.random() * 100,
+      width: Math.random() * 60 + 80,
+      height: Math.random() * 40 + 80,
+      color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][Math.floor(Math.random() * 5)],
+      roofColor: ['#C0392B', '#2C3E50', '#8E44AD', '#27AE60', '#E74C3C'][Math.floor(Math.random() * 5)],
+    });
+  }
+  return houses;
+};
+
 const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
   const canvasRef = useRef(null);
   const gameStateRef = useRef({
@@ -103,35 +132,6 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
       particles: [],
     };
   }, [canvasSize]);
-
-  // Generate initial clouds
-  const generateClouds = (width) => {
-    const clouds = [];
-    for (let i = 0; i < 6; i++) {
-      clouds.push({
-        x: Math.random() * width * 1.5,
-        y: Math.random() * 150 + 30,
-        width: Math.random() * 80 + 60,
-        speed: Math.random() * 0.5 + 0.2,
-      });
-    }
-    return clouds;
-  };
-
-  // Generate initial houses
-  const generateHouses = (width) => {
-    const houses = [];
-    for (let i = 0; i < 5; i++) {
-      houses.push({
-        x: i * 400 + Math.random() * 100,
-        width: Math.random() * 60 + 80,
-        height: Math.random() * 40 + 80,
-        color: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][Math.floor(Math.random() * 5)],
-        roofColor: ['#C0392B', '#2C3E50', '#8E44AD', '#27AE60', '#E74C3C'][Math.floor(Math.random() * 5)],
-      });
-    }
-    return houses;
-  };
 
   // Spawn obstacle or mailbox
   const spawnGameObject = useCallback(() => {
