@@ -229,7 +229,11 @@ const GameCanvas = ({ isPlaying, onGameOver, onScoreUpdate }) => {
         case 'trash': obs = { ...obs, y: groundY - 55, width: 40, height: 55 }; break;
         case 'baby': obs = { ...obs, y: groundY - 50, width: 55, height: 50 }; break;
         case 'basketball': obs = { ...obs, y: groundY - 35, width: 35, height: 35, bounce: 0 }; break;
-        case 'child': obs = { ...obs, y: groundY - 45, width: 30, height: 45, frame: 0 }; break;
+        case 'child': 
+          // Assign a fixed shirt color when spawning
+          const shirtColors = ['#2196F3', '#4CAF50', '#FF9800', '#9C27B0'];
+          obs = { ...obs, y: groundY - 45, width: 30, height: 45, frame: 0, shirtColor: shirtColors[Math.floor(Math.random() * shirtColors.length)] }; 
+          break;
         default: obs = { ...obs, y: groundY - 40, width: 40, height: 40 };
       }
       state.obstacles.push(obs);
