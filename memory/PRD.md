@@ -20,6 +20,15 @@ MailSprint is an infinite runner game where players control a mailman running do
 ### Game Objects
 - **Mailboxes**: Blue boxes with red flags - turn green when mail is delivered
 - **Heart Pickups**: Floating hearts that spawn every ~2 minutes, restore 1 HP
+- **Power-ups**: Spawn every 25-40 seconds, last 30 seconds each:
+  - 🔥 **Rapid Fire**: Automatically fires letters nonstop
+  - ➡️ **Straight Shot**: Letters fly straight instead of arcing
+  - ↔️ **Double Shot**: Also throws a letter behind you
+  - ⚡ **Speed Boost**: Move 50% faster
+  - 🐌 **Slow Motion**: Everything moves 50% slower
+  - 🦘 **Super Jump**: Jump 50% higher
+  - 🛡️ **Invincibility**: Cannot take damage (pink shield)
+  - 💥 **Knockback**: Letters destroy obstacles (+25 points each)
 - **Obstacles**:
   - Dogs (brown, animated legs) - plays bark sound
   - Traffic pylons (orange with white stripes)
@@ -28,7 +37,11 @@ MailSprint is an infinite runner game where players control a mailman running do
   - Baby carriages (pink, plays cry sound when hit)
   - Basketballs (orange, bouncing animation)
   - Children (colorful clothes, animated walking)
-- **Cars**: Drive across screen every 1-3 minutes, deal 2 damage! (with horn sound)
+- **Road Hazards** (every 15-45 seconds):
+  - Cars (colored, deal 2 damage!) - honk when appearing
+  - Bouncing tires (animated rolling)
+  - Tumbleweeds (brown, rolling)
+  - Bikers (animated pedaling)
 
 ### Day/Night Cycle
 - Full cycle every 2 minutes
