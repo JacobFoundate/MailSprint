@@ -367,14 +367,31 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     }
   }, []);
 
-  useImperativeHandle(ref, () => ({ jump: () => jump(), throwMail: () => doThrowMail(), releaseJump: () => releaseJump() }), [jump, doThrowMail, releaseJump]);
+  useImperativeHandle(ref, () => ({ 
+    jump: () => jump(), 
+    throwMail: () => doThrowMail(), 
+    releaseJump: () => releaseJump(),
+    moveLeft: (active) => { const state = gameStateRef.current; if (state) state.player.moveLeft = active; },
+    moveRight: (active) => { const state = gameStateRef.current; if (state) state.player.moveRight = active; },
+  }), [jump, doThrowMail, releaseJump]);
 
   useEffect(() => {
     if (!isPlaying) return;
     const handleKeyDown = (e) => {
       if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
       if (e.code === 'KeyE') { e.preventDefault(); doThrowMail(); }
-      // Superman: S to descend
+      // Left/right movement
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const state = gameStateRef.current;
+        if (state) state.player.moveLeft = true;
+      }
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        e.preventDefault();
+        const state = gameStateRef.current;
+        if (state) state.player.moveRight = true;
+      }
+      // Superman: S to descend (only when flying)
       if (e.code === 'KeyS' || e.code === 'ArrowDown') {
         const state = gameStateRef.current;
         if (state && state.player.isFlying) {
@@ -387,6 +404,15 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       // Variable jump height - release to stop rising
       if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
         releaseJump();
+      }
+      // Stop left/right movement
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') {
+        const state = gameStateRef.current;
+        if (state) state.player.moveLeft = false;
+      }
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') {
+        const state = gameStateRef.current;
+        if (state) state.player.moveRight = false;
       }
     };
     const handleClick = (e) => { if (window.matchMedia('(pointer: fine)').matches) doThrowMail(); };
