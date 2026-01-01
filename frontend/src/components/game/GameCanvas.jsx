@@ -1225,9 +1225,6 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       for (let i = -1; i < canvasSize.width / 80 + 1; i++) ctx.fillRect(i * 80 - mo, groundY + GAME_CONFIG.GROUND_HEIGHT / 2 - 3, 40, 6);
       ctx.fillStyle = nightAmount > 0.5 ? '#909090' : '#BDBDBD'; ctx.fillRect(0, groundY - 5, canvasSize.width, 10);
 
-      // Road hazards
-      state.roadHazards.forEach(h => drawRoadHazard(ctx, h));
-
       // Mailboxes
       state.mailboxes.forEach(box => {
         ctx.fillStyle = '#5D4037'; ctx.fillRect(box.x + 10, box.y, 10, box.height);
