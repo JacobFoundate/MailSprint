@@ -1,11 +1,17 @@
 import React from 'react';
 import { ArrowUp, Mail } from 'lucide-react';
 
-const MobileControls = ({ onJump, onThrow }) => {
+const MobileControls = ({ onJump, onThrow, onJumpRelease }) => {
   const handleJumpStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
     onJump();
+  };
+
+  const handleJumpEnd = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onJumpRelease) onJumpRelease();
   };
 
   const handleThrowStart = (e) => {
@@ -20,7 +26,9 @@ const MobileControls = ({ onJump, onThrow }) => {
         {/* Jump Button - Bottom Left */}
         <button
           onTouchStart={handleJumpStart}
+          onTouchEnd={handleJumpEnd}
           onMouseDown={handleJumpStart}
+          onMouseUp={handleJumpEnd}
           className="pointer-events-auto w-20 h-20 rounded-full bg-primary/80 backdrop-blur-sm border-4 border-primary-foreground/30 shadow-glow-primary flex items-center justify-center active:scale-95 active:bg-primary transition-transform"
           aria-label="Jump"
         >
