@@ -133,14 +133,14 @@ const StartScreen = ({ onStart, highScore }) => {
 
         {/* Instructions Card */}
         {showInstructions && (
-          <Card className="mt-6 max-w-md mx-auto bg-card/95 backdrop-blur-sm border-2 border-primary/20 animate-slide-up">
+          <Card className="mt-6 max-w-lg mx-auto bg-card/95 backdrop-blur-sm border-2 border-primary/20 animate-slide-up">
             <CardContent className="p-6">
               <h3 className="font-fredoka text-xl text-foreground mb-4 flex items-center justify-center gap-2">
                 <Zap className="w-5 h-5 text-secondary" />
                 How to Play
                 <Zap className="w-5 h-5 text-secondary" />
               </h3>
-              <div className="space-y-3 text-left">
+              <div className="space-y-3 text-left mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
                     <span className="font-fredoka text-primary">↑</span>
@@ -168,6 +168,54 @@ const StartScreen = ({ onStart, highScore }) => {
                     <p className="text-sm text-muted-foreground">Land mail in mailboxes!</p>
                   </div>
                 </div>
+              </div>
+              
+              {/* Power-ups Section */}
+              <h4 className="font-fredoka text-lg text-foreground mb-3 flex items-center gap-2 border-t border-border pt-4">
+                <span>⚡</span> Power-Ups
+              </h4>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="bg-orange-500/20 rounded-lg p-2">
+                  <div className="text-lg">🔥</div>
+                  <p className="font-semibold text-foreground">Rapid Fire</p>
+                </div>
+                <div className="bg-blue-500/20 rounded-lg p-2">
+                  <div className="text-lg">➡️</div>
+                  <p className="font-semibold text-foreground">Straight Shot</p>
+                </div>
+                <div className="bg-purple-500/20 rounded-lg p-2">
+                  <div className="text-lg">↔️</div>
+                  <p className="font-semibold text-foreground">Double Shot</p>
+                </div>
+                <div className="bg-green-500/20 rounded-lg p-2">
+                  <div className="text-lg">⚡</div>
+                  <p className="font-semibold text-foreground">Speed Boost</p>
+                </div>
+                <div className="bg-cyan-500/20 rounded-lg p-2">
+                  <div className="text-lg">🐌</div>
+                  <p className="font-semibold text-foreground">Slow Motion</p>
+                </div>
+                <div className="bg-yellow-500/20 rounded-lg p-2">
+                  <div className="text-lg">🦘</div>
+                  <p className="font-semibold text-foreground">Super Jump</p>
+                </div>
+                <div className="bg-pink-500/20 rounded-lg p-2">
+                  <div className="text-lg">🛡️</div>
+                  <p className="font-semibold text-foreground">Invincible</p>
+                </div>
+                <div className="bg-amber-500/20 rounded-lg p-2">
+                  <div className="text-lg">💥</div>
+                  <p className="font-semibold text-foreground">Knockback</p>
+                </div>
+                <div className="bg-blue-600/20 rounded-lg p-2">
+                  <div className="text-lg">🦸</div>
+                  <p className="font-semibold text-foreground">Superman</p>
+                </div>
+              </div>
+              
+              {/* Tips */}
+              <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+                <p>💚 Collect hearts to heal • 🍀 Touch leprechauns for bonus points!</p>
               </div>
             </CardContent>
           </Card>
