@@ -131,6 +131,27 @@ const GamePage = () => {
 
   return (
     <div className={`game-container relative w-full h-screen overflow-hidden bg-background ${screenShake ? 'animate-shake' : ''}`}>
+      {/* Portrait Mode Warning for Mobile */}
+      {isPortrait && (
+        <div className="absolute inset-0 bg-gradient-to-b from-sky-400 to-sky-600 z-[100] flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl max-w-sm">
+            <div className="w-20 h-20 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
+              <RotateCcw className="w-10 h-10 text-primary animate-spin" style={{ animationDuration: '3s' }} />
+            </div>
+            <h2 className="font-fredoka text-2xl text-gray-800 mb-3">Rotate Your Device</h2>
+            <p className="text-gray-600 mb-4">
+              MailSprint plays best in <strong>landscape mode</strong>! 
+              Turn your phone sideways to see obstacles coming and enjoy the full experience.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <span className="inline-block w-8 h-12 border-2 border-gray-400 rounded-md"></span>
+              <span className="text-2xl">→</span>
+              <span className="inline-block w-12 h-8 border-2 border-primary rounded-md bg-primary/10"></span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Damage Flash Overlay */}
       {damageFlash && (
         <div className="absolute inset-0 bg-destructive/30 z-50 pointer-events-none animate-pulse" />
