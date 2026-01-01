@@ -201,6 +201,8 @@ const GamePage = () => {
               onJump={handleMobileJump}
               onJumpRelease={handleMobileJumpRelease}
               onThrow={handleMobileThrow}
+              onMoveLeft={handleMobileMoveLeft}
+              onMoveRight={handleMobileMoveRight}
             />
           </>
         )}
