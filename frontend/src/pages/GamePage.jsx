@@ -5,6 +5,7 @@ import GameOverScreen from '@/components/game/GameOverScreen';
 import GameHUD from '@/components/game/GameHUD';
 import MobileControls from '@/components/game/MobileControls';
 import soundManager from '@/utils/SoundManager';
+import { RotateCcw } from 'lucide-react';
 
 const GamePage = () => {
   const gameCanvasRef = useRef(null);
@@ -20,6 +21,26 @@ const GamePage = () => {
   const [damageFlash, setDamageFlash] = useState(false);
   const [screenShake, setScreenShake] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  // Check for portrait mode on mobile
+  useEffect(() => {
+    const checkOrientation = () => {
+      const isMobile = window.matchMedia('(max-width: 768px)').matches || 
+                       window.matchMedia('(pointer: coarse)').matches;
+      const isPortraitMode = window.innerHeight > window.innerWidth;
+      setIsPortrait(isMobile && isPortraitMode);
+    };
+    
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
 
   // Initialize sound on first interaction
   useEffect(() => {
