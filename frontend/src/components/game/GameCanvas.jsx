@@ -1095,7 +1095,8 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       // Update mails
       state.mails = state.mails.filter(mail => {
         mail.x += mail.vx; mail.y += mail.vy;
-        if (!mail.knockback || state.activePowerups.straightShot <= 0) mail.vy += 0.5;
+        // Only apply gravity if NOT a straight shot
+        if (!mail.isStraight) mail.vy += 0.5;
         mail.rotation += 15;
         for (let box of state.mailboxes) {
           if (!box.hasDelivery && mail.x + 20 > box.x - 10 && mail.x < box.x + box.width + 10 && mail.y + 20 > box.y - 10 && mail.y < box.y + box.height + 20) {
