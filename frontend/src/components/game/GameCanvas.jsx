@@ -823,8 +823,14 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     initGame();
 
     const gameLoop = (currentTime) => {
-      const deltaTime = (currentTime - lastTimeRef.current) / 1000;
+      let deltaTime = (currentTime - lastTimeRef.current) / 1000;
       lastTimeRef.current = currentTime;
+      
+      // Cap deltaTime to prevent speed spikes on high refresh rate displays or lag
+      // This ensures consistent game speed across all devices
+      const maxDeltaTime = 1 / GAME_CONFIG.TARGET_FPS;
+      deltaTime = Math.min(deltaTime, maxDeltaTime * 2); // Cap at 2x target frame time
+      
       if (!isPlaying) { animationRef.current = requestAnimationFrame(gameLoop); return; }
       const state = gameStateRef.current;
       if (!state) { animationRef.current = requestAnimationFrame(gameLoop); return; }
@@ -834,6 +840,9 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       const hasSlowMotion = state.activePowerups.slowMotion > 0;
       const speedMod = hasSpeedBoost ? 1.5 : hasSlowMotion ? 0.5 : 1;
       const hasInvincibility = state.activePowerups.invincibility > 0;
+      
+      // Normalize speed calculations to target FPS for consistent gameplay
+      const frameMultiplier = deltaTime * GAME_CONFIG.TARGET_FPS;
 
       // Update powerup timers
       Object.keys(state.activePowerups).forEach(key => {
