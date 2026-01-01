@@ -1329,6 +1329,9 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
         }
       }
 
+      // Road hazards (foreground - in front of player since they're on the road closer to camera)
+      state.roadHazards.forEach(h => drawRoadHazard(ctx, h));
+
       // Weather
       if (state.isStorming && state.stormIntensity > 0.1) {
         const alpha = state.stormIntensity * 0.8;
