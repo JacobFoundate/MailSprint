@@ -133,8 +133,8 @@ const StartScreen = ({ onStart, highScore }) => {
 
         {/* Instructions Card */}
         {showInstructions && (
-          <Card className="mt-6 max-w-lg mx-auto bg-card/95 backdrop-blur-sm border-2 border-primary/20 animate-slide-up">
-            <CardContent className="p-6">
+          <Card className="mt-6 max-w-lg mx-auto bg-card/95 backdrop-blur-sm border-2 border-primary/20 animate-slide-up max-h-[60vh] overflow-y-auto">
+            <CardContent className="p-4 sm:p-6">
               <h3 className="font-fredoka text-xl text-foreground mb-4 flex items-center justify-center gap-2">
                 <Zap className="w-5 h-5 text-secondary" />
                 How to Play
