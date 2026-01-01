@@ -97,9 +97,26 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
   const animationRef = useRef(null);
   const lastTimeRef = useRef(0);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
-    const updateSize = () => setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
+    const updateSize = () => {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      
+      // Minimum game height to prevent "zoomed in" look on mobile landscape
+      const MIN_GAME_HEIGHT = 500;
+      
+      // If screen is too short (landscape mobile), use virtual height and scale down
+      if (screenHeight < MIN_GAME_HEIGHT) {
+        const newScale = screenHeight / MIN_GAME_HEIGHT;
+        setScale(newScale);
+        setCanvasSize({ width: screenWidth / newScale, height: MIN_GAME_HEIGHT });
+      } else {
+        setScale(1);
+        setCanvasSize({ width: screenWidth, height: screenHeight });
+      }
+    };
     updateSize();
     window.addEventListener('resize', updateSize);
     return () => window.removeEventListener('resize', updateSize);
