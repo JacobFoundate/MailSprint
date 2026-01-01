@@ -135,46 +135,37 @@ const StartScreen = ({ onStart, highScore }) => {
         {showInstructions && (
           <Card className="mt-6 max-w-lg mx-auto bg-card/95 backdrop-blur-sm border-2 border-primary/20 animate-slide-up max-h-[60vh] overflow-y-auto">
             <CardContent className="p-4 sm:p-6">
-              <h3 className="font-fredoka text-xl text-foreground mb-4 flex items-center justify-center gap-2">
-                <Zap className="w-5 h-5 text-secondary" />
+              <h3 className="font-fredoka text-lg sm:text-xl text-foreground mb-3 flex items-center justify-center gap-2">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
                 How to Play
-                <Zap className="w-5 h-5 text-secondary" />
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-secondary" />
               </h3>
-              <div className="space-y-3 text-left mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                    <span className="font-fredoka text-primary">↑</span>
+              <div className="space-y-2 text-left mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="font-fredoka text-primary text-sm sm:text-base">↑</span>
                   </div>
                   <div>
-                    <p className="font-nunito font-semibold text-foreground">Jump</p>
-                    <p className="text-sm text-muted-foreground">Space/W/↑ (hold for high, tap for short)</p>
+                    <p className="font-nunito font-semibold text-foreground text-sm">Jump</p>
+                    <p className="text-xs text-muted-foreground">Space/W/↑ (hold=high, tap=short)</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <span className="font-fredoka text-blue-500">←→</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="font-fredoka text-blue-500 text-sm sm:text-base">←→</span>
                   </div>
                   <div>
-                    <p className="font-nunito font-semibold text-foreground">Move Left/Right</p>
-                    <p className="text-sm text-muted-foreground">A/D or ←/→ to position yourself</p>
+                    <p className="font-nunito font-semibold text-foreground text-sm">Move Left/Right</p>
+                    <p className="text-xs text-muted-foreground">A/D or ←/→ to position</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
-                    <Mail className="w-5 h-5 text-accent" />
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                   </div>
                   <div>
-                    <p className="font-nunito font-semibold text-foreground">Throw Mail</p>
-                    <p className="text-sm text-muted-foreground">Press E or click/tap</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-success/20 rounded-lg flex items-center justify-center">
-                    <Star className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="font-nunito font-semibold text-foreground">Score Points</p>
-                    <p className="text-sm text-muted-foreground">Land mail in mailboxes!</p>
+                    <p className="font-nunito font-semibold text-foreground text-sm">Throw Mail</p>
+                    <p className="text-xs text-muted-foreground">Press E or tap</p>
                   </div>
                 </div>
               </div>
