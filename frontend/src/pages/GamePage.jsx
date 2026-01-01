@@ -135,6 +135,18 @@ const GamePage = () => {
     }
   }, [gameState]);
 
+  const handleMobileMoveLeft = useCallback((active) => {
+    if (gameCanvasRef.current && gameState === 'playing') {
+      gameCanvasRef.current.moveLeft(active);
+    }
+  }, [gameState]);
+
+  const handleMobileMoveRight = useCallback((active) => {
+    if (gameCanvasRef.current && gameState === 'playing') {
+      gameCanvasRef.current.moveRight(active);
+    }
+  }, [gameState]);
+
   return (
     <div className={`game-container relative w-full h-screen overflow-hidden bg-background ${screenShake ? 'animate-shake' : ''}`}>
       {/* Portrait Mode Warning for Mobile */}
