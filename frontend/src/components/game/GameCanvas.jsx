@@ -22,11 +22,11 @@ const GAME_CONFIG = {
   DAY_NIGHT_CYCLE_DURATION: 120,
   CYCLES_PER_SEASON: 15,
   WEATHER_PARTICLE_COUNT: 100,
-  HEART_SPAWN_INTERVAL: 120,
+  HEART_SPAWN_INTERVAL: 45,
   ROAD_HAZARD_MIN_INTERVAL: 15,
   ROAD_HAZARD_MAX_INTERVAL: 45,
   ROAD_HAZARD_TYPES: ['car', 'tire', 'tumbleweed', 'biker'],
-  POWERUP_SPAWN_INTERVAL: 25,
+  POWERUP_SPAWN_INTERVAL: 12,
   POWERUP_DURATION: 30,
   POWERUP_TYPES: ['rapidFire', 'straightShot', 'doubleShot', 'speedBoost', 'slowMotion', 'superJump', 'invincibility', 'knockback', 'superman'],
   LEPRECHAUN_SPAWN_INTERVAL: 60, // Every 60-90 seconds
