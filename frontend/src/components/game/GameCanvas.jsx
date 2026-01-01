@@ -1003,7 +1003,10 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
         heart.x -= effectiveSpeed; heart.pulse += 0.1;
         const pb = { x: state.player.x, y: state.player.y, width: GAME_CONFIG.PLAYER_WIDTH, height: GAME_CONFIG.PLAYER_HEIGHT };
         if (pb.x < heart.x + heart.width && pb.x + pb.width > heart.x && pb.y < heart.y + heart.height && pb.y + pb.height > heart.y) {
-          if (state.lives < GAME_CONFIG.MAX_LIVES) { state.lives++; soundManager.playHeal(); addParticles(heart.x + 15, heart.y + 15, '#E91E63', 15); }
+          // Heal 2 lives (but don't exceed max)
+          state.lives = Math.min(GAME_CONFIG.MAX_LIVES, state.lives + 2);
+          soundManager.playHeal();
+          addParticles(heart.x + 15, heart.y + 15, '#E91E63', 15);
           return false;
         }
         return heart.x > -50;
