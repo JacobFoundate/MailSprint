@@ -123,6 +123,12 @@ const GamePage = () => {
     }
   }, [gameState]);
 
+  const handleMobileJumpRelease = useCallback(() => {
+    if (gameCanvasRef.current && gameState === 'playing') {
+      gameCanvasRef.current.releaseJump();
+    }
+  }, [gameState]);
+
   const handleMobileThrow = useCallback(() => {
     if (gameCanvasRef.current && gameState === 'playing') {
       gameCanvasRef.current.throwMail();
