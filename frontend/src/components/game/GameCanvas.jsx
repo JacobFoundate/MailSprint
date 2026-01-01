@@ -1436,7 +1436,15 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
   }, [canvasSize, isPlaying, initGame, spawnGameObject, spawnHeart, spawnRoadHazard, spawnPowerup, spawnLeprechaun, spawnPedestrian, spawnBird, spawnRainbowPlatforms, spawnCoins, activatePowerup, onGameOver, onScoreUpdate, addParticles, throwMail]);
 
-  return <canvas ref={canvasRef} width={canvasSize.width} height={canvasSize.height} className="absolute inset-0 game-canvas" />;
+  return (
+    <canvas 
+      ref={canvasRef} 
+      width={canvasSize.width} 
+      height={canvasSize.height} 
+      className="absolute inset-0 game-canvas origin-top-left" 
+      style={{ transform: `scale(${scale})` }}
+    />
+  );
 });
 
 export default GameCanvas;
