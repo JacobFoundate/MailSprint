@@ -110,7 +110,7 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     const randomSeason = Math.floor(Math.random() * 4);
     
     gameStateRef.current = {
-      player: { x: GAME_CONFIG.PLAYER_X, y: groundY, vy: 0, isJumping: false, isOnGround: true, isFlying: false },
+      player: { x: GAME_CONFIG.PLAYER_X, y: groundY, vy: 0, isJumping: false, isOnGround: true, isFlying: false, moveLeft: false, moveRight: false },
       obstacles: [], mailboxes: [], mails: [], clouds: generateClouds(canvasSize.width), houses: generateHouses(canvasSize.width),
       trees: generateTrees(canvasSize.width), pedestrians: [], birds: [],
       hearts: [], roadHazards: [], powerups: [], activePowerups: {}, coins: [], rainbowPlatforms: [], leprechauns: [],
