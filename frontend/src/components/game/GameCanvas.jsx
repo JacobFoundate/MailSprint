@@ -305,7 +305,15 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       vy = 15; // Throw downward
     }
     
-    state.mails.push({ x: state.player.x + (backward ? -10 : GAME_CONFIG.PLAYER_WIDTH), y: state.player.y + 20, vx, vy, rotation: 0, knockback: hasKnockback });
+    state.mails.push({ 
+      x: state.player.x + (backward ? -10 : GAME_CONFIG.PLAYER_WIDTH), 
+      y: state.player.y + 20, 
+      vx, 
+      vy, 
+      rotation: 0, 
+      knockback: hasKnockback,
+      isStraight: hasStraightShot  // Mark as straight shot to prevent gravity
+    });
     if (!backward) soundManager.playThrow();
   }, []);
 
