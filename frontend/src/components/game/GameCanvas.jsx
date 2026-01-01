@@ -357,7 +357,17 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
     }
   }, []);
 
-  useImperativeHandle(ref, () => ({ jump: () => jump(), throwMail: () => doThrowMail() }), [jump, doThrowMail]);
+  // Cut jump short when key is released (variable jump height)
+  const releaseJump = useCallback(() => {
+    const state = gameStateRef.current;
+    if (!state) return;
+    // If player is rising (vy < 0) and jumping, reduce upward velocity
+    if (state.player.isJumping && state.player.vy < -5) {
+      state.player.vy = -5; // Cap upward velocity to give control
+    }
+  }, []);
+
+  useImperativeHandle(ref, () => ({ jump: () => jump(), throwMail: () => doThrowMail(), releaseJump: () => releaseJump() }), [jump, doThrowMail, releaseJump]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -373,11 +383,22 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
         }
       }
     };
+    const handleKeyUp = (e) => {
+      // Variable jump height - release to stop rising
+      if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
+        releaseJump();
+      }
+    };
     const handleClick = (e) => { if (window.matchMedia('(pointer: fine)').matches) doThrowMail(); };
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('click', handleClick);
-    return () => { window.removeEventListener('keydown', handleKeyDown); window.removeEventListener('click', handleClick); };
-  }, [isPlaying, jump, doThrowMail]);
+    return () => { 
+      window.removeEventListener('keydown', handleKeyDown); 
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('click', handleClick); 
+    };
+  }, [isPlaying, jump, doThrowMail, releaseJump]);
 
   const hexToRgb = (hex) => { const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return r ? `rgb(${parseInt(r[1], 16)}, ${parseInt(r[2], 16)}, ${parseInt(r[3], 16)})` : hex; };
   const lerpColor = (c1, c2, t) => { const a = c1.match(/\d+/g).map(Number), b = c2.match(/\d+/g).map(Number); return `rgb(${Math.round(a[0] + (b[0] - a[0]) * t)}, ${Math.round(a[1] + (b[1] - a[1]) * t)}, ${Math.round(a[2] + (b[2] - a[2]) * t)})`; };
