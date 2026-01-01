@@ -187,6 +187,7 @@ const GamePage = () => {
             {/* Mobile Controls - Only visible on touch devices */}
             <MobileControls
               onJump={handleMobileJump}
+              onJumpRelease={handleMobileJumpRelease}
               onThrow={handleMobileThrow}
             />
           </>
