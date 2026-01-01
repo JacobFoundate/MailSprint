@@ -1002,24 +1002,19 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
         return pu.x > -50;
       });
 
-      // Update leprechauns
+      // Update leprechauns - simple kill for bonus points
       state.leprechauns = state.leprechauns.filter(lep => {
         lep.x -= effectiveSpeed; lep.frame += 0.15;
         const pb = { x: state.player.x, y: state.player.y, width: GAME_CONFIG.PLAYER_WIDTH, height: GAME_CONFIG.PLAYER_HEIGHT };
-        // Check if player jumps on leprechaun (from above)
-        if (state.player.vy > 0 && pb.x + pb.width > lep.x && pb.x < lep.x + lep.width &&
-            pb.y + pb.height >= lep.y && pb.y + pb.height <= lep.y + 20) {
-          lep.hits++;
-          state.player.vy = -12; // Bounce off
-          spawnCoins(lep.x + lep.width / 2, lep.y, 5);
-          state.score += 50;
-          if (lep.hits >= lep.maxHits) {
-            soundManager.playLeprechaunLaugh();
-            spawnCoins(lep.x + lep.width / 2, lep.y, 20);
-            spawnRainbowPlatforms();
-            state.score += 200;
-            return false;
-          }
+        // Check if player touches/jumps on leprechaun - instant kill for bonus
+        if (pb.x + pb.width > lep.x && pb.x < lep.x + lep.width &&
+            pb.y + pb.height > lep.y && pb.y < lep.y + lep.height) {
+          soundManager.playLeprechaunLaugh();
+          spawnCoins(lep.x + lep.width / 2, lep.y, 15);
+          state.score += 500; // Big bonus!
+          state.player.vy = -10; // Small bounce
+          addParticles(lep.x + lep.width / 2, lep.y, '#FFD700', 20);
+          return false;
         }
         return lep.x > -50;
       });
