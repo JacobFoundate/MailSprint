@@ -944,23 +944,33 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
       state.nextBirdSpawn -= deltaTime;
       if (state.nextBirdSpawn <= 0) { spawnBird(); state.nextBirdSpawn = GAME_CONFIG.BIRD_MIN_INTERVAL + Math.random() * (GAME_CONFIG.BIRD_MAX_INTERVAL - GAME_CONFIG.BIRD_MIN_INTERVAL); }
 
-      // Game mechanics
-      state.speed = Math.min(GAME_CONFIG.MAX_SPEED, state.speed + GAME_CONFIG.SPEED_INCREMENT);
-      const effectiveSpeed = state.speed * speedMod;
+      // Game mechanics - Apply frameMultiplier for frame-rate independence
+      state.speed = Math.min(GAME_CONFIG.MAX_SPEED, state.speed + GAME_CONFIG.SPEED_INCREMENT * frameMultiplier);
+      const effectiveSpeed = state.speed * speedMod * frameMultiplier;
       state.distance += effectiveSpeed / 10;
-      state.score += GAME_CONFIG.DISTANCE_POINTS;
+      state.score += GAME_CONFIG.DISTANCE_POINTS * frameMultiplier;
 
-      // Player physics
+      // Player horizontal movement (left/right positioning)
+      if (state.player.moveLeft) {
+        state.player.x -= 5 * frameMultiplier;
+      }
+      if (state.player.moveRight) {
+        state.player.x += 5 * frameMultiplier;
+      }
+      // Constrain player to screen bounds
+      state.player.x = Math.max(30, Math.min(canvasSize.width * 0.4, state.player.x));
+
+      // Player physics - Apply frameMultiplier for consistent physics
       if (state.player.isFlying) {
-        state.player.vy *= 0.9; // Air resistance when flying
-        state.player.y += state.player.vy;
+        state.player.vy *= Math.pow(0.9, frameMultiplier); // Air resistance when flying
+        state.player.y += state.player.vy * frameMultiplier;
         // Keep in bounds
         if (state.player.y < 50) { state.player.y = 50; state.player.vy = 0; }
         if (state.player.y > groundY - GAME_CONFIG.PLAYER_HEIGHT) { state.player.y = groundY - GAME_CONFIG.PLAYER_HEIGHT; state.player.vy = 0; }
       } else {
-        state.player.vy += GAME_CONFIG.GRAVITY;
+        state.player.vy += GAME_CONFIG.GRAVITY * frameMultiplier;
         state.player.vy = Math.min(state.player.vy, GAME_CONFIG.MAX_FALL_SPEED);
-        state.player.y += state.player.vy;
+        state.player.y += state.player.vy * frameMultiplier;
       }
 
       // Ground collision
