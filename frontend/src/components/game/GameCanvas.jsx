@@ -1051,27 +1051,15 @@ const GameCanvas = React.forwardRef(({ isPlaying, onGameOver, onScoreUpdate }, r
         
         const pb = { x: state.player.x + 10, y: state.player.y + 10, width: GAME_CONFIG.PLAYER_WIDTH - 20, height: GAME_CONFIG.PLAYER_HEIGHT - 10 };
         
-        // Trampoline special handling
+        // Trampoline special handling - only bounces, no damage
         if (obs.type === 'trampoline') {
-          // Check if landing on top (bouncing)
-          if (state.player.vy > 0 && pb.x + pb.width > obs.x && pb.x < obs.x + obs.width &&
-              pb.y + pb.height >= obs.y && pb.y + pb.height <= obs.y + 15) {
+          // Check if landing on top or touching (bouncing)
+          if (pb.x + pb.width > obs.x && pb.x < obs.x + obs.width &&
+              pb.y + pb.height >= obs.y && pb.y + pb.height <= obs.y + obs.height) {
             state.player.vy = -28; // Super bounce!
             obs.springPhase = 0;
             soundManager.playBoing();
             addParticles(obs.x + obs.width / 2, obs.y, '#E91E63', 10);
-            return true;
-          }
-          // Side collision = damage
-          if (!state.isInvincible && !hasInvincibility && !state.player.isFlying) {
-            if (pb.x < obs.x + obs.width && pb.x + pb.width > obs.x && pb.y < obs.y + obs.height && pb.y + pb.height > obs.y) {
-              state.lives--;
-              state.isInvincible = true;
-              state.invincibleTimer = 120;
-              addParticles(state.player.x + GAME_CONFIG.PLAYER_WIDTH / 2, state.player.y + GAME_CONFIG.PLAYER_HEIGHT / 2, '#FF6B6B', 15);
-              soundManager.playThud();
-              if (state.lives <= 0) { state.lives = 0; soundManager.stopMusic(); onGameOver(state.score, state.deliveries, Math.floor(state.distance)); }
-            }
           }
           return obs.x + obs.width > -50;
         }
