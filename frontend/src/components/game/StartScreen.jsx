@@ -171,51 +171,51 @@ const StartScreen = ({ onStart, highScore }) => {
               </div>
               
               {/* Power-ups Section */}
-              <h4 className="font-fredoka text-lg text-foreground mb-3 flex items-center gap-2 border-t border-border pt-4">
+              <h4 className="font-fredoka text-base text-foreground mb-2 flex items-center gap-2 border-t border-border pt-3">
                 <span>⚡</span> Power-Ups
               </h4>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="bg-orange-500/20 rounded-lg p-2">
-                  <div className="text-lg">🔥</div>
-                  <p className="font-semibold text-foreground">Rapid Fire</p>
+              <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
+                <div className="bg-orange-500/20 rounded-lg p-1.5">
+                  <div className="text-base">🔥</div>
+                  <p className="font-semibold text-foreground text-xs">Rapid Fire</p>
                 </div>
-                <div className="bg-blue-500/20 rounded-lg p-2">
-                  <div className="text-lg">➡️</div>
-                  <p className="font-semibold text-foreground">Straight Shot</p>
+                <div className="bg-blue-500/20 rounded-lg p-1.5">
+                  <div className="text-base">➡️</div>
+                  <p className="font-semibold text-foreground text-xs">Straight</p>
                 </div>
-                <div className="bg-purple-500/20 rounded-lg p-2">
-                  <div className="text-lg">↔️</div>
-                  <p className="font-semibold text-foreground">Double Shot</p>
+                <div className="bg-purple-500/20 rounded-lg p-1.5">
+                  <div className="text-base">↔️</div>
+                  <p className="font-semibold text-foreground text-xs">Double</p>
                 </div>
-                <div className="bg-green-500/20 rounded-lg p-2">
-                  <div className="text-lg">⚡</div>
-                  <p className="font-semibold text-foreground">Speed Boost</p>
+                <div className="bg-green-500/20 rounded-lg p-1.5">
+                  <div className="text-base">⚡</div>
+                  <p className="font-semibold text-foreground text-xs">Speed</p>
                 </div>
-                <div className="bg-cyan-500/20 rounded-lg p-2">
-                  <div className="text-lg">🐌</div>
-                  <p className="font-semibold text-foreground">Slow Motion</p>
+                <div className="bg-cyan-500/20 rounded-lg p-1.5">
+                  <div className="text-base">🐌</div>
+                  <p className="font-semibold text-foreground text-xs">Slow</p>
                 </div>
-                <div className="bg-yellow-500/20 rounded-lg p-2">
-                  <div className="text-lg">🦘</div>
-                  <p className="font-semibold text-foreground">Super Jump</p>
+                <div className="bg-yellow-500/20 rounded-lg p-1.5">
+                  <div className="text-base">🦘</div>
+                  <p className="font-semibold text-foreground text-xs">Jump</p>
                 </div>
-                <div className="bg-pink-500/20 rounded-lg p-2">
-                  <div className="text-lg">🛡️</div>
-                  <p className="font-semibold text-foreground">Invincible</p>
+                <div className="bg-pink-500/20 rounded-lg p-1.5">
+                  <div className="text-base">🛡️</div>
+                  <p className="font-semibold text-foreground text-xs">Shield</p>
                 </div>
-                <div className="bg-amber-500/20 rounded-lg p-2">
-                  <div className="text-lg">💥</div>
-                  <p className="font-semibold text-foreground">Knockback</p>
+                <div className="bg-amber-500/20 rounded-lg p-1.5">
+                  <div className="text-base">💥</div>
+                  <p className="font-semibold text-foreground text-xs">Knockback</p>
                 </div>
-                <div className="bg-blue-600/20 rounded-lg p-2">
-                  <div className="text-lg">🦸</div>
-                  <p className="font-semibold text-foreground">Superman</p>
+                <div className="bg-blue-600/20 rounded-lg p-1.5">
+                  <div className="text-base">🦸</div>
+                  <p className="font-semibold text-foreground text-xs">Superman</p>
                 </div>
               </div>
               
               {/* Tips */}
-              <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-                <p>💚 Collect hearts to heal • 🍀 Touch leprechauns for bonus points!</p>
+              <div className="mt-3 pt-2 border-t border-border text-xs text-muted-foreground">
+                <p>💚 Hearts heal 2 lives • 🍀 Touch leprechauns for bonus!</p>
               </div>
             </CardContent>
           </Card>
