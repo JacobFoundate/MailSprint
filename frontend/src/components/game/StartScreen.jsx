@@ -147,7 +147,16 @@ const StartScreen = ({ onStart, highScore }) => {
                   </div>
                   <div>
                     <p className="font-nunito font-semibold text-foreground">Jump</p>
-                    <p className="text-sm text-muted-foreground">Press Space, W, or ↑</p>
+                    <p className="text-sm text-muted-foreground">Space/W/↑ (hold for high, tap for short)</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <span className="font-fredoka text-blue-500">←→</span>
+                  </div>
+                  <div>
+                    <p className="font-nunito font-semibold text-foreground">Move Left/Right</p>
+                    <p className="text-sm text-muted-foreground">A/D or ←/→ to position yourself</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
